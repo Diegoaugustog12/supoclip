@@ -70,5 +70,7 @@
   "sourceFile": "Berkas dari komputer saya",
   "fileLabel": "Berkas video",
   "fileHint": "Bingkai dibaca di browser Anda dan berkas tidak diunggah. Pilih momen saat webcam dan game terlihat.",
-  "fileError": "Browser Anda tidak dapat membaca video ini. Coba MP4 (H.264)."
+  "fileError": "Browser Anda tidak dapat membaca video ini. Coba MP4 (H.264).",
+  "playClip": "Putar 5 detik",
+  "playing": "Memutar…"
 }

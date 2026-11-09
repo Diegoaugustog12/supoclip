@@ -70,5 +70,7 @@
   "sourceFile": "File from my computer",
   "fileLabel": "Video file",
   "fileHint": "The frame is read in your browser and the file is not uploaded. Use a moment where the webcam and the game are both visible.",
-  "fileError": "Your browser could not read this video. Try an MP4 (H.264)."
+  "fileError": "Your browser could not read this video. Try an MP4 (H.264).",
+  "playClip": "Play 5 seconds",
+  "playing": "Playing…"
 }

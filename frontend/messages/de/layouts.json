@@ -70,5 +70,7 @@
   "sourceFile": "Datei von meinem Computer",
   "fileLabel": "Videodatei",
   "fileHint": "Das Bild wird in deinem Browser gelesen, die Datei wird nicht hochgeladen. Nimm einen Moment, in dem Webcam und Spiel zu sehen sind.",
-  "fileError": "Dein Browser konnte dieses Video nicht lesen. Versuche ein MP4 (H.264)."
+  "fileError": "Dein Browser konnte dieses Video nicht lesen. Versuche ein MP4 (H.264).",
+  "playClip": "5 Sekunden abspielen",
+  "playing": "Wird abgespielt…"
 }

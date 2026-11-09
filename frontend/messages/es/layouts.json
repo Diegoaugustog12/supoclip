@@ -70,5 +70,7 @@
   "sourceFile": "Archivo de mi ordenador",
   "fileLabel": "Archivo de vídeo",
   "fileHint": "El fotograma se lee en tu navegador y el archivo no se sube. Usa un momento en el que se vean la webcam y el juego.",
-  "fileError": "Tu navegador no pudo leer este vídeo. Prueba con un MP4 (H.264)."
+  "fileError": "Tu navegador no pudo leer este vídeo. Prueba con un MP4 (H.264).",
+  "playClip": "Reproducir 5 segundos",
+  "playing": "Reproduciendo…"
 }

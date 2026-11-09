@@ -130,7 +130,8 @@ export function LayoutEditor() {
   }, [frame, heights, aspect, fits]);
 
   // The 9:16 result, drawn from the same crops the render will use.
-  useEffect(() => {
+  const live = useRef<HTMLVideoElement | null>(null);
+  const paint = useCallback(() => {
     const canvas = preview.current;
     if (!canvas || !frame || crops.length < count) return;
     const ctx = canvas.getContext("2d");
@@ -142,7 +143,10 @@ export function LayoutEditor() {
     heights.forEach((ph, i) => {
       const crop = crops[i];
       const h = ph * scale;
-      const { naturalWidth: nw, naturalHeight: nh } = frame.image;
+      const video = live.current;
+      const image: CanvasImageSource = video ?? frame.image;
+      const nw = video ? video.videoWidth : frame.image.naturalWidth;
+      const nh = video ? video.videoHeight : frame.image.naturalHeight;
       const source = [crop.x * nw, crop.y * nh, crop.w * nw, crop.h * nh] as const;
       if (fits[i] === "contain") {
         // Blurred copy filling the panel, then the whole crop scaled to fit.
@@ -152,13 +156,13 @@ export function LayoutEditor() {
         ctx.clip();
         const cover = Math.max(PREVIEW_W / source[2], h / source[3]);
         ctx.filter = "blur(6px)";
-        ctx.drawImage(frame.image, ...source, (PREVIEW_W - source[2] * cover) / 2, y + (h - source[3] * cover) / 2, source[2] * cover, source[3] * cover);
+        ctx.drawImage(image, ...source, (PREVIEW_W - source[2] * cover) / 2, y + (h - source[3] * cover) / 2, source[2] * cover, source[3] * cover);
         ctx.filter = "none";
         const contain = Math.min(PREVIEW_W / source[2], h / source[3]);
-        ctx.drawImage(frame.image, ...source, (PREVIEW_W - source[2] * contain) / 2, y + (h - source[3] * contain) / 2, source[2] * contain, source[3] * contain);
+        ctx.drawImage(image, ...source, (PREVIEW_W - source[2] * contain) / 2, y + (h - source[3] * contain) / 2, source[2] * contain, source[3] * contain);
         ctx.restore();
       } else {
-        ctx.drawImage(frame.image, ...source, 0, y, PREVIEW_W, h);
+        ctx.drawImage(image, ...source, 0, y, PREVIEW_W, h);
       }
       y += h;
     });
@@ -196,6 +200,46 @@ export function LayoutEditor() {
       drawText("Example headline", familyFor(title.font ?? caption.font), titlePx, (title.y ?? 0.09) * canvas.height, PREVIEW_W * 0.88);
     }
   }, [frame, crops, heights, count, captionY, caption, title, templates, familyFor, fontsReady, fits]);
+  useEffect(() => { paint(); }, [paint]);
+
+  // Plays 5 seconds of the chosen file through the same crops, so motion can be judged.
+  const [playing, setPlaying] = useState(false);
+  async function playClip() {
+    if (!file || playing) return;
+    setPlaying(true);
+    const video = document.createElement("video");
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve();
+        video.onerror = () => reject(new Error(t("fileError")));
+      });
+      video.currentTime = Number(time) || 0;
+      await new Promise<void>((resolve) => { video.onseeked = () => resolve(); });
+      live.current = video;
+      await video.play();
+      const end = video.currentTime + 5;
+      await new Promise<void>((resolve) => {
+        const tick = () => {
+          paint();
+          if (video.ended || video.currentTime >= end) resolve();
+          else requestAnimationFrame(tick);
+        };
+        tick();
+      });
+    } catch (error) {
+      setFrameError(error instanceof Error ? error.message : t("fileError"));
+    } finally {
+      video.pause();
+      live.current = null;
+      URL.revokeObjectURL(url);
+      setPlaying(false);
+      paint();
+    }
+  }
 
   async function loadFrame() {
     setLoadingFrame(true);
@@ -519,6 +563,9 @@ export function LayoutEditor() {
 
           <aside className="space-y-3 lg:sticky lg:top-4 lg:self-start">
             <p className="text-sm font-medium">{t("outputPreview")}</p>
+            {source === "file" && file && (
+              <Button size="sm" variant="outline" disabled={playing} onClick={() => void playClip()}>{playing ? t("playing") : t("playClip")}</Button>
+            )}
             <canvas ref={preview} width={PREVIEW_W} height={Math.round((PREVIEW_W * OUT_H) / OUT_W)} className="rounded-lg border bg-black" aria-label={t("outputPreview")} />
             <div className="space-y-2">
               <Label htmlFor="layout-name">{t("nameLabel")}</Label>

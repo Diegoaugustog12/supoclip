@@ -39,6 +39,64 @@ const CAPTION_ANIMATIONS = ["none", "karaoke", "pop", "fade", "bounce", "flicker
 const TITLE_ANIMATIONS = ["fade", "pop", "none"] as const;
 const SAMPLE_WORDS = ["this", "is", "how", "your", "captions", "will", "look", "here"];
 
+const WORD_SECONDS = 0.45;
+/** Sample caption drawn with the chosen animation at `elapsed` seconds of playback. */
+function drawAnimatedCaption(ctx: CanvasRenderingContext2D, elapsed: number, opts: { family: string; px: number; centreY: number; maxWidth: number; centreX: number; words: number; animation: string; uppercase: boolean }) {
+  const total = Math.floor(elapsed / WORD_SECONDS);
+  const start = Math.floor(total / opts.words) * opts.words;
+  const active = total - start;
+  const inWord = elapsed - total * WORD_SECONDS;
+  const group = Array.from({ length: opts.words }, (_, i) => SAMPLE_WORDS[(start + i) % SAMPLE_WORDS.length]).map((w) => (opts.uppercase ? w.toUpperCase() : w));
+  const shown = opts.animation === "typewriter" ? group.slice(0, active + 1) : group;
+  ctx.font = `${opts.px}px "${opts.family}", sans-serif`;
+  const fit = Math.min(1, opts.maxWidth / Math.max(1, ctx.measureText(group.join(" ")).width));
+  const px = Math.max(6, opts.px * fit);
+  ctx.font = `${px}px "${opts.family}", sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = Math.max(2, px / 5);
+  const space = ctx.measureText(" ").width;
+  const widths = group.map((w) => ctx.measureText(w).width);
+  const lineWidth = widths.reduce((a, b) => a + b, 0) + space * (group.length - 1);
+  let x = opts.centreX - lineWidth / 2;
+  group.forEach((word, i) => {
+    const width = widths[i];
+    if (i < shown.length) {
+      const isActive = i === active;
+      let scale = 1;
+      let dy = 0;
+      let alpha = 1;
+      let color = "#fff";
+      if (opts.animation === "karaoke" && isActive) color = "#facc15";
+      if (isActive) {
+        const k = Math.min(1, inWord / 0.15);
+        if (opts.animation === "pop") scale = 1.35 - 0.35 * k;
+        if (opts.animation === "bounce") dy = -Math.sin(k * Math.PI) * px * 0.35;
+        if (opts.animation === "fade") alpha = k;
+        if (opts.animation === "flicker") alpha = inWord < 0.3 && Math.floor(elapsed * 24) % 2 === 0 ? 0.25 : 1;
+      }
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x + width / 2, opts.centreY + dy);
+      ctx.scale(scale, scale);
+      if (opts.animation === "glitch" && isActive && inWord < 0.3) {
+        const jitter = (Math.floor(elapsed * 30) % 3 - 1) * px * 0.08;
+        ctx.fillStyle = "#f43f5e";
+        ctx.fillText(word, -width / 2 + jitter, 0);
+        ctx.fillStyle = "#22d3ee";
+        ctx.fillText(word, -width / 2 - jitter, 0);
+      }
+      ctx.strokeStyle = "#000";
+      ctx.strokeText(word, -width / 2, 0);
+      ctx.fillStyle = color;
+      ctx.fillText(word, -width / 2, 0);
+      ctx.restore();
+    }
+    x += width + space;
+  });
+}
+
 type FontInfo = { name: string; display_name: string; format?: string };
 type TemplateInfo = { id: string; name: string; font_family: string; font_size: number };
 
@@ -131,6 +189,7 @@ export function LayoutEditor() {
 
   // The 9:16 result, drawn from the same crops the render will use.
   const live = useRef<HTMLVideoElement | null>(null);
+  const liveStart = useRef(0);
   const paint = useCallback(() => {
     const canvas = preview.current;
     if (!canvas || !frame || crops.length < count) return;
@@ -184,7 +243,15 @@ export function LayoutEditor() {
     const margin = caption.margin ?? 0.06;
     const sample = SAMPLE_WORDS.slice(0, caption.max_words ?? 4).join(" ");
     const capPx = ((caption.size ?? template?.font_size ?? 30) * PREVIEW_W) / 560;
-    drawText(caption.uppercase ? sample.toUpperCase() : sample, familyFor(caption.font), capPx, lineY, PREVIEW_W * (1 - 2 * margin));
+    const playing = live.current;
+    if (playing) {
+      drawAnimatedCaption(ctx, Math.max(0, playing.currentTime - liveStart.current), {
+        family: familyFor(caption.font), px: capPx, centreY: lineY, maxWidth: PREVIEW_W * (1 - 2 * margin), centreX: PREVIEW_W / 2,
+        words: caption.max_words ?? 4, animation: caption.animation ?? "karaoke", uppercase: caption.uppercase === true,
+      });
+    } else {
+      drawText(caption.uppercase ? sample.toUpperCase() : sample, familyFor(caption.font), capPx, lineY, PREVIEW_W * (1 - 2 * margin));
+    }
     ctx.strokeStyle = "rgba(250, 204, 21, 0.7)";
     ctx.setLineDash([3, 3]);
     ctx.lineWidth = 1;
@@ -228,7 +295,7 @@ export function LayoutEditor() {
     }
     const fromFile = source === "file";
     video.src = objectUrl;
-    video.muted = true;
+    video.muted = false;
     video.playsInline = true;
     try {
       await new Promise<void>((resolve, reject) => {
@@ -239,6 +306,7 @@ export function LayoutEditor() {
         video.currentTime = Number(time) || 0;
         await new Promise<void>((resolve) => { video.onseeked = () => resolve(); });
       }
+      liveStart.current = video.currentTime;
       live.current = video;
       await video.play();
       const end = video.currentTime + 5;

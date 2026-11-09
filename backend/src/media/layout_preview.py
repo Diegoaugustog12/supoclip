@@ -91,12 +91,12 @@ def preview_frame(url: str, seconds: float) -> bytes:
 
 
 def _clip_from(source: str, seconds: float, headers: Optional[dict] = None) -> bytes:
-    """Five silent seconds as a fragmented MP4 (streamable through a pipe)."""
+    """Five seconds as a fragmented MP4 (streamable through a pipe)."""
     command = ["ffmpeg", "-v", "error", "-y"]
     if headers:
         command += ["-headers", "".join(f"{k}: {v}\r\n" for k, v in headers.items())]
     command += [
-        "-ss", f"{max(0.0, seconds):.2f}", "-i", source, "-t", str(CLIP_SECONDS), "-an",
+        "-ss", f"{max(0.0, seconds):.2f}", "-i", source, "-t", str(CLIP_SECONDS), "-c:a", "aac", "-b:a", "96k",
         "-vf", f"scale='min({CLIP_WIDTH},iw)':-2", "-c:v", "libx264", "-preset", "veryfast",
         "-crf", "28", "-pix_fmt", "yuv420p", "-movflags", "frag_keyframe+empty_moov",
         "-f", "mp4", "-",

@@ -12,10 +12,34 @@ export const MIN_CROP_W = 0.08;
 
 export type Crop = { x: number; y: number; w: number; h: number };
 export type PanelCount = 1 | 2;
+/** Caption overrides. A missing key keeps the caption template's own value. */
+export type CaptionStyle = {
+  template?: string;
+  font?: string;
+  /** Template font size units, 12 to 72. */
+  size?: number;
+  max_words?: number;
+  /** Side margin as a fraction of the width. */
+  margin?: number;
+  animation?: string;
+  uppercase?: boolean;
+};
+export type TitleAnimation = "fade" | "pop" | "none";
+/** Title (hook headline) overrides. `size` is in 1080-wide pixels. */
+export type TitleStyle = {
+  enabled?: boolean;
+  /** Vertical centre as a fraction of the height. */
+  y?: number;
+  size?: number;
+  font?: string;
+  animation?: TitleAnimation;
+};
 export type LayoutSpec = {
   version: 1;
   panels: { crop: Crop; height: number }[];
   caption_y: number | null;
+  caption?: CaptionStyle;
+  title?: TitleStyle;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -81,22 +105,33 @@ export function buildSpec(
   firstShare: number,
   crops: Crop[],
   captionY: number | null,
+  caption: CaptionStyle = {},
+  title: TitleStyle = {},
 ): LayoutSpec {
   const share = clamp(firstShare, MIN_SHARE, 1 - MIN_SHARE);
   const panels = crops.slice(0, count).map((crop, index) => ({
     crop: { x: crop.x, y: crop.y, w: crop.w, h: crop.h },
     height: count === 1 ? 1 : index === 0 ? share : 1 - share,
   }));
-  return { version: 1, panels, caption_y: captionY };
+  return { version: 1, panels, caption_y: captionY, caption, title };
 }
 
 /** Editor state from a saved spec. */
-export function fromSpec(spec: LayoutSpec): { count: PanelCount; firstShare: number; crops: Crop[]; captionY: number | null } {
+export function fromSpec(spec: LayoutSpec): {
+  count: PanelCount;
+  firstShare: number;
+  crops: Crop[];
+  captionY: number | null;
+  caption: CaptionStyle;
+  title: TitleStyle;
+} {
   const count: PanelCount = spec.panels.length === 2 ? 2 : 1;
   return {
     count,
     firstShare: count === 2 ? spec.panels[0].height : 0.5,
     crops: spec.panels.map((panel) => ({ ...panel.crop })),
     captionY: spec.caption_y ?? null,
+    caption: { ...(spec.caption ?? {}) },
+    title: { ...(spec.title ?? {}) },
   };
 }

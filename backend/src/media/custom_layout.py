@@ -14,6 +14,7 @@ its panel is centre-cropped to fit, so the page draws crops in the panel's shape
 and the render shows exactly what was drawn.
 """
 
+import re
 from typing import Any, Dict, List, Optional
 
 from .common import UPSCALE_SHARPEN_FILTER
@@ -32,6 +33,81 @@ def _number(value: Any, name: str) -> float:
     if value != value or value in (float("inf"), float("-inf")):
         raise ValueError(f"{name} must be a finite number")
     return value
+
+
+ANIMATIONS = {"none", "karaoke", "pop", "fade", "bounce", "flicker", "glitch", "typewriter"}
+TITLE_ANIMATIONS = {"fade", "pop", "none"}
+_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_. -]{0,63}$")
+
+
+def _ranged(raw: Dict[str, Any], key: str, low: float, high: float, integer: bool = False) -> Any:
+    value = _number(raw[key], key)
+    if not low <= value <= high:
+        raise ValueError(f"{key} must be between {low:g} and {high:g}")
+    return int(round(value)) if integer else value
+
+
+def _name(raw: Dict[str, Any], key: str) -> str:
+    value = raw[key]
+    if not isinstance(value, str) or not _NAME.match(value):
+        raise ValueError(f"{key} is not a valid name")
+    return value
+
+
+def normalize_caption_style(raw: Any) -> Dict[str, Any]:
+    """Caption overrides a layout may carry. Only known keys are kept."""
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        raise ValueError("caption must be an object")
+    from ..caption_templates import CAPTION_TEMPLATES
+
+    style: Dict[str, Any] = {}
+    if raw.get("template") is not None:
+        if raw["template"] not in CAPTION_TEMPLATES:
+            raise ValueError("unknown caption template")
+        style["template"] = raw["template"]
+    if raw.get("font") is not None:
+        style["font"] = _name(raw, "font")
+    if raw.get("size") is not None:
+        style["size"] = _ranged(raw, "size", 12, 72, integer=True)
+    if raw.get("max_words") is not None:
+        style["max_words"] = _ranged(raw, "max_words", 1, 8, integer=True)
+    if raw.get("margin") is not None:
+        style["margin"] = _ranged(raw, "margin", 0.02, 0.2)
+    if raw.get("animation") is not None:
+        if raw["animation"] not in ANIMATIONS:
+            raise ValueError("unknown caption animation")
+        style["animation"] = raw["animation"]
+    if raw.get("uppercase") is not None:
+        if not isinstance(raw["uppercase"], bool):
+            raise ValueError("uppercase must be true or false")
+        style["uppercase"] = raw["uppercase"]
+    return style
+
+
+def normalize_title_style(raw: Any) -> Dict[str, Any]:
+    """Title (hook headline) overrides a layout may carry."""
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        raise ValueError("title must be an object")
+    style: Dict[str, Any] = {}
+    if raw.get("enabled") is not None:
+        if not isinstance(raw["enabled"], bool):
+            raise ValueError("enabled must be true or false")
+        style["enabled"] = raw["enabled"]
+    if raw.get("y") is not None:
+        style["y"] = _ranged(raw, "y", 0.05, 0.9)
+    if raw.get("size") is not None:
+        style["size"] = _ranged(raw, "size", 24, 120, integer=True)
+    if raw.get("font") is not None:
+        style["font"] = _name(raw, "font")
+    if raw.get("animation") is not None:
+        if raw["animation"] not in TITLE_ANIMATIONS:
+            raise ValueError("unknown title animation")
+        style["animation"] = raw["animation"]
+    return style
 
 
 def normalize_layout_spec(raw: Any) -> Dict[str, Any]:
@@ -70,7 +146,13 @@ def normalize_layout_spec(raw: Any) -> Dict[str, Any]:
         caption_y = _number(caption_y, "caption_y")
         if not 0.1 <= caption_y <= 0.9:
             raise ValueError("caption_y must be between 0.1 and 0.9")
-    return {"version": 1, "panels": panels, "caption_y": caption_y}
+    return {
+        "version": 1,
+        "panels": panels,
+        "caption_y": caption_y,
+        "caption": normalize_caption_style(raw.get("caption")),
+        "title": normalize_title_style(raw.get("title")),
+    }
 
 
 def panel_heights(spec: Dict[str, Any]) -> List[int]:

@@ -37,5 +37,30 @@
   "mySaved": "已保存的布局",
   "noSaved": "还没有保存的布局。",
   "panelsCount": "{count, plural, other {# 个面板}}",
-  "delete": "删除 {name}"
+  "delete": "删除 {name}",
+  "captionSection": "字幕",
+  "titleSection": "标题",
+  "resetStyle": "重置",
+  "template": "字幕样式",
+  "font": "字体",
+  "animation": "动画",
+  "defaultOption": "样式默认值",
+  "uppercase": "大写",
+  "sizeLabel": "大小：{value}",
+  "maxWordsLabel": "每句词数：{value}",
+  "marginLabel": "侧边距：{percent}%",
+  "titleEnabled": "显示 AI 标题",
+  "titleYLabel": "标题位置：距顶部 {percent}%",
+  "titleSizeLabel": "标题大小：{value}",
+  "titleHint": "预览使用示例文本。字体和大小接近实际效果，但并不完全一致。",
+  "animationNames": {
+    "none": "无",
+    "karaoke": "卡拉 OK",
+    "pop": "弹出",
+    "fade": "淡入淡出",
+    "bounce": "弹跳",
+    "flicker": "闪烁",
+    "glitch": "故障",
+    "typewriter": "打字机"
+  }
 }

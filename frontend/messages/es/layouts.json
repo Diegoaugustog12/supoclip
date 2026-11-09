@@ -37,5 +37,30 @@
   "mySaved": "Diseños guardados",
   "noSaved": "Aún no hay diseños guardados.",
   "panelsCount": "{count, plural, one {# panel} other {# paneles}}",
-  "delete": "Eliminar {name}"
+  "delete": "Eliminar {name}",
+  "captionSection": "Subtítulos",
+  "titleSection": "Título",
+  "resetStyle": "Restablecer",
+  "template": "Estilo de subtítulos",
+  "font": "Fuente",
+  "animation": "Animación",
+  "defaultOption": "Predeterminado del estilo",
+  "uppercase": "Mayúsculas",
+  "sizeLabel": "Tamaño: {value}",
+  "maxWordsLabel": "Palabras por frase: {value}",
+  "marginLabel": "Margen lateral: {percent}%",
+  "titleEnabled": "Mostrar el titular de la IA",
+  "titleYLabel": "Posición del título: {percent}% desde arriba",
+  "titleSizeLabel": "Tamaño del título: {value}",
+  "titleHint": "La vista previa usa textos de ejemplo. Fuentes y tamaños se acercan al resultado, sin ser idénticos.",
+  "animationNames": {
+    "none": "Ninguna",
+    "karaoke": "Karaoke",
+    "pop": "Pop",
+    "fade": "Fundido",
+    "bounce": "Rebote",
+    "flicker": "Parpadeo",
+    "glitch": "Glitch",
+    "typewriter": "Máquina de escribir"
+  }
 }

@@ -86,3 +86,20 @@ describe("spec round trip", () => {
     expect(spec.caption_y).toBeNull();
   });
 });
+
+describe("caption and title styles", () => {
+  it("are saved with the spec and read back", () => {
+    const crop = defaultCrop(panelRatio(1920), FRAME);
+    const spec = buildSpec(1, 0.5, [crop], null, { size: 40, max_words: 3, animation: "pop" }, { y: 0.2, enabled: false });
+    expect(spec.caption).toEqual({ size: 40, max_words: 3, animation: "pop" });
+    const state = fromSpec(spec);
+    expect(state.caption.max_words).toBe(3);
+    expect(state.title).toEqual({ y: 0.2, enabled: false });
+  });
+
+  it("an older spec without styles reads back empty", () => {
+    const state = fromSpec({ version: 1, panels: [{ crop: { x: 0, y: 0, w: 1, h: 1 }, height: 1 }], caption_y: null });
+    expect(state.caption).toEqual({});
+    expect(state.title).toEqual({});
+  });
+});

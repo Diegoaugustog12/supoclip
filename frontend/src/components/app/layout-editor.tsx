@@ -10,9 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import {
+  type CaptionStyle,
   type Crop,
   type LayoutSpec,
   type PanelCount,
+  type TitleStyle,
   OUT_H,
   OUT_W,
   buildSpec,
@@ -29,7 +31,13 @@ type Frame = { src: string; aspect: number; image: HTMLImageElement };
 type Drag = { index: number; mode: "move" | "resize"; startX: number; startY: number; crop: Crop };
 
 const PANEL_COLORS = ["#22c55e", "#3b82f6"];
-const PREVIEW_W = 180;
+const PREVIEW_W = 200;
+const CAPTION_ANIMATIONS = ["none", "karaoke", "pop", "fade", "bounce", "flicker", "glitch", "typewriter"] as const;
+const TITLE_ANIMATIONS = ["fade", "pop", "none"] as const;
+const SAMPLE_WORDS = ["this", "is", "how", "your", "captions", "will", "look", "here"];
+
+type FontInfo = { name: string; display_name: string; format?: string };
+type TemplateInfo = { id: string; name: string; font_family: string; font_size: number };
 
 async function errorText(response: Response, fallback: string) {
   try {
@@ -51,6 +59,10 @@ export function LayoutEditor() {
   const [firstShare, setFirstShare] = useState(0.35);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [captionY, setCaptionY] = useState<number | null>(null);
+  const [caption, setCaption] = useState<CaptionStyle>({});
+  const [title, setTitle] = useState<TitleStyle>({});
+  const [fonts, setFonts] = useState<FontInfo[]>([]);
+  const [templates, setTemplates] = useState<TemplateInfo[]>([]);
   const [name, setName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saved, setSaved] = useState<Saved[]>([]);
@@ -71,6 +83,33 @@ export function LayoutEditor() {
     }
   }, []);
   useEffect(() => { void loadSaved(); }, [loadSaved]);
+
+  // Fonts and caption templates for the style controls; fonts are also loaded so the preview text uses them.
+  useEffect(() => {
+    fetch("/api/fonts", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : { fonts: [] }))
+      .then((body) => {
+        const list: FontInfo[] = Array.isArray(body.fonts) ? body.fonts : [];
+        setFonts(list);
+        const style = document.createElement("style");
+        style.id = "layout-editor-fonts";
+        style.textContent = list.map((font) => `@font-face { font-family: '${font.name}'; src: url('/api/fonts/${font.name}') format('${font.format === "otf" ? "opentype" : "truetype"}'); }`).join("\n");
+        document.getElementById("layout-editor-fonts")?.remove();
+        document.head.appendChild(style);
+      })
+      .catch(() => setFonts([]));
+    fetch("/api/caption-templates", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : { templates: [] }))
+      .then((body) => setTemplates(Array.isArray(body.templates) ? body.templates : []))
+      .catch(() => setTemplates([]));
+  }, []);
+  const [fontsReady, setFontsReady] = useState(0);
+  const familyFor = useCallback((choice?: string) => choice || templates.find((item) => item.id === (caption.template ?? "default"))?.font_family || "sans-serif", [caption.template, templates]);
+  useEffect(() => {
+    const families = [familyFor(caption.font), title.font ? familyFor(title.font) : familyFor(caption.font)];
+    void Promise.all(families.map((family) => document.fonts.load(`40px "${family}"`).catch(() => [])))
+      .then(() => setFontsReady((n) => n + 1));
+  }, [caption.font, caption.template, title.font, familyFor]);
 
   // Re-fit every crop to its panel's shape when the split, count or frame changes.
   useEffect(() => {
@@ -102,9 +141,39 @@ export function LayoutEditor() {
       y += h;
     });
     const lineY = (captionY ?? (count === 2 ? heights[0] / OUT_H : 0.8)) * canvas.height;
-    ctx.fillStyle = "rgba(250, 204, 21, 0.9)";
-    ctx.fillRect(PREVIEW_W * 0.1, lineY - 3, PREVIEW_W * 0.8, 6);
-  }, [frame, crops, heights, count, captionY]);
+    const drawText = (text: string, family: string, px: number, centreY: number, maxWidth: number) => {
+      ctx.font = `${px}px "${family}", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const fit = Math.min(1, maxWidth / Math.max(1, ctx.measureText(text).width));
+      ctx.font = `${Math.max(6, px * fit)}px "${family}", sans-serif`;
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(2, px / 5);
+      ctx.strokeStyle = "#000";
+      ctx.strokeText(text, PREVIEW_W / 2, centreY);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(text, PREVIEW_W / 2, centreY);
+    };
+    const template = templates.find((item) => item.id === (caption.template ?? "default"));
+    const margin = caption.margin ?? 0.06;
+    const sample = SAMPLE_WORDS.slice(0, caption.max_words ?? 4).join(" ");
+    const capPx = ((caption.size ?? template?.font_size ?? 30) * PREVIEW_W) / 560;
+    drawText(caption.uppercase ? sample.toUpperCase() : sample, familyFor(caption.font), capPx, lineY, PREVIEW_W * (1 - 2 * margin));
+    ctx.strokeStyle = "rgba(250, 204, 21, 0.7)";
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1;
+    [margin, 1 - margin].forEach((fraction) => {
+      ctx.beginPath();
+      ctx.moveTo(fraction * PREVIEW_W, lineY - capPx);
+      ctx.lineTo(fraction * PREVIEW_W, lineY + capPx);
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    if (title.enabled !== false) {
+      const titlePx = ((title.size ?? 70) * PREVIEW_W) / OUT_W;
+      drawText("Example headline", familyFor(title.font ?? caption.font), titlePx, (title.y ?? 0.09) * canvas.height, PREVIEW_W * 0.88);
+    }
+  }, [frame, crops, heights, count, captionY, caption, title, templates, familyFor, fontsReady]);
 
   async function loadFrame() {
     setLoadingFrame(true);
@@ -167,6 +236,8 @@ export function LayoutEditor() {
     setFirstShare(state.firstShare);
     setCrops(state.crops);
     setCaptionY(state.captionY);
+    setCaption(state.caption);
+    setTitle(state.title);
     setName(item.name);
     setEditingId(item.id);
   }
@@ -179,7 +250,7 @@ export function LayoutEditor() {
       const response = await fetch(updating ? `/api/layouts/${editingId}` : "/api/layouts", {
         method: updating ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), spec: buildSpec(count, firstShare, crops, captionY) }),
+        body: JSON.stringify({ name: name.trim(), spec: buildSpec(count, firstShare, crops, captionY, caption, title) }),
       });
       if (!response.ok) throw new Error(await errorText(response, t("saveError")));
       const body = await response.json();
@@ -289,6 +360,90 @@ export function LayoutEditor() {
                 )}
               </div>
             </div>
+
+            <fieldset className="space-y-4 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <legend className="text-sm font-semibold">{t("captionSection")}</legend>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setCaption({})}>{t("resetStyle")}</Button>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="space-y-1 text-sm">
+                  <span>{t("template")}</span>
+                  <select className="h-9 w-full rounded-md border bg-background px-2" value={caption.template ?? ""} onChange={(e) => setCaption({ ...caption, template: e.target.value || undefined })}>
+                    <option value="">{t("defaultOption")}</option>
+                    {templates.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  </select>
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span>{t("font")}</span>
+                  <select className="h-9 w-full rounded-md border bg-background px-2" value={caption.font ?? ""} onChange={(e) => setCaption({ ...caption, font: e.target.value || undefined })}>
+                    <option value="">{t("defaultOption")}</option>
+                    {fonts.map((font) => <option key={font.name} value={font.name}>{font.display_name || font.name}</option>)}
+                  </select>
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span>{t("animation")}</span>
+                  <select className="h-9 w-full rounded-md border bg-background px-2" value={caption.animation ?? ""} onChange={(e) => setCaption({ ...caption, animation: e.target.value || undefined })}>
+                    <option value="">{t("defaultOption")}</option>
+                    {CAPTION_ANIMATIONS.map((id) => <option key={id} value={id}>{t(`animationNames.${id}`)}</option>)}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={caption.uppercase === true} onChange={(e) => setCaption({ ...caption, uppercase: e.target.checked ? true : undefined })} />
+                  <span>{t("uppercase")}</span>
+                </label>
+                <div className="space-y-2">
+                  <Label>{t("sizeLabel", { value: caption.size ?? templates.find((i) => i.id === (caption.template ?? "default"))?.font_size ?? 30 })}</Label>
+                  <Slider value={[caption.size ?? templates.find((i) => i.id === (caption.template ?? "default"))?.font_size ?? 30]} min={12} max={72} step={1} onValueChange={(v) => setCaption({ ...caption, size: v[0] })} aria-label={t("sizeLabel", { value: caption.size ?? 30 })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("maxWordsLabel", { value: caption.max_words ?? 4 })}</Label>
+                  <Slider value={[caption.max_words ?? 4]} min={1} max={8} step={1} onValueChange={(v) => setCaption({ ...caption, max_words: v[0] })} aria-label={t("maxWordsLabel", { value: caption.max_words ?? 4 })} />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>{t("marginLabel", { percent: Math.round((caption.margin ?? 0.06) * 100) })}</Label>
+                  <Slider value={[(caption.margin ?? 0.06) * 100]} min={2} max={20} step={1} onValueChange={(v) => setCaption({ ...caption, margin: v[0] / 100 })} aria-label={t("marginLabel", { percent: Math.round((caption.margin ?? 0.06) * 100) })} />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset className="space-y-4 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <legend className="text-sm font-semibold">{t("titleSection")}</legend>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setTitle({})}>{t("resetStyle")}</Button>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={title.enabled !== false} onChange={(e) => setTitle({ ...title, enabled: e.target.checked ? undefined : false })} />
+                <span>{t("titleEnabled")}</span>
+              </label>
+              {title.enabled !== false && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-1 text-sm">
+                    <span>{t("font")}</span>
+                    <select className="h-9 w-full rounded-md border bg-background px-2" value={title.font ?? ""} onChange={(e) => setTitle({ ...title, font: e.target.value || undefined })}>
+                      <option value="">{t("defaultOption")}</option>
+                      {fonts.map((font) => <option key={font.name} value={font.name}>{font.display_name || font.name}</option>)}
+                    </select>
+                  </label>
+                  <label className="space-y-1 text-sm">
+                    <span>{t("animation")}</span>
+                    <select className="h-9 w-full rounded-md border bg-background px-2" value={title.animation ?? ""} onChange={(e) => setTitle({ ...title, animation: (e.target.value || undefined) as TitleStyle["animation"] })}>
+                      <option value="">{t("defaultOption")}</option>
+                      {TITLE_ANIMATIONS.map((id) => <option key={id} value={id}>{t(`animationNames.${id}`)}</option>)}
+                    </select>
+                  </label>
+                  <div className="space-y-2">
+                    <Label>{t("titleYLabel", { percent: Math.round((title.y ?? 0.09) * 100) })}</Label>
+                    <Slider value={[(title.y ?? 0.09) * 100]} min={5} max={90} step={1} onValueChange={(v) => setTitle({ ...title, y: v[0] / 100 })} aria-label={t("titleYLabel", { percent: Math.round((title.y ?? 0.09) * 100) })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("titleSizeLabel", { value: title.size ?? 70 })}</Label>
+                    <Slider value={[title.size ?? 70]} min={24} max={120} step={1} onValueChange={(v) => setTitle({ ...title, size: v[0] })} aria-label={t("titleSizeLabel", { value: title.size ?? 70 })} />
+                  </div>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">{t("titleHint")}</p>
+            </fieldset>
           </section>
 
           <aside className="space-y-3">

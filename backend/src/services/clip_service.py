@@ -751,6 +751,20 @@ class ClipEditingMixin:
         return {"message": "Clips merged successfully", "clip_id": first["id"]}
 
 
+    async def _bind_task_layout(self, task_id: str) -> str:
+        """Make the layout chosen at creation the one the renderer uses.
+
+        ``get_task_by_id`` does not return ``source_metadata``, so it is loaded
+        explicitly. Always binds (``auto`` when none), so a job never inherits
+        the previous job's choice.
+        """
+        from ..media.layout_choice import bind_layout
+
+        metadata = await self.task_repo.load_source_metadata(self.db, task_id)
+        if not isinstance(metadata, dict):
+            return bind_layout(None)
+        return bind_layout(metadata.get("layout"), metadata.get("layout_spec"))
+
     @serialized_task_edit
     async def update_clip_captions(
         self,
@@ -767,6 +781,8 @@ class ClipEditingMixin:
         clip = await self.clip_repo.get_clip_by_id(self.db, clip_id)
         if not clip or clip["task_id"] != task_id:
             raise ValueError("Clip not found")
+        # A custom layout also carries caption and title styling: keep it on re-renders.
+        await self._bind_task_layout(task_id)
         # No text given: caption the clip with what is spoken in it. This is how a
         # clip generated without captions gets them later.
         if caption_text is None:

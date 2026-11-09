@@ -37,5 +37,30 @@
   "mySaved": "Layouts salvos",
   "noSaved": "Nenhum layout salvo ainda.",
   "panelsCount": "{count, plural, one {# painel} other {# painéis}}",
-  "delete": "Excluir {name}"
+  "delete": "Excluir {name}",
+  "captionSection": "Legenda",
+  "titleSection": "Título",
+  "resetStyle": "Redefinir",
+  "template": "Estilo da legenda",
+  "font": "Fonte",
+  "animation": "Animação",
+  "defaultOption": "Padrão do estilo",
+  "uppercase": "Maiúsculas",
+  "sizeLabel": "Tamanho: {value}",
+  "maxWordsLabel": "Palavras por frase: {value}",
+  "marginLabel": "Margem lateral: {percent}%",
+  "titleEnabled": "Mostrar o título criado pela IA",
+  "titleYLabel": "Posição do título: {percent}% do topo",
+  "titleSizeLabel": "Tamanho do título: {value}",
+  "titleHint": "A prévia usa textos de exemplo. Fontes e tamanhos ficam próximos do resultado, não idênticos.",
+  "animationNames": {
+    "none": "Nenhuma",
+    "karaoke": "Karaokê",
+    "pop": "Pop",
+    "fade": "Fade",
+    "bounce": "Quique",
+    "flicker": "Piscar",
+    "glitch": "Glitch",
+    "typewriter": "Máquina de escrever"
+  }
 }

@@ -38,6 +38,7 @@ from .ffmpeg import (
 from .transcription import (
     load_cached_transcript_data,
 )
+from .layout_choice import current_layout, current_layout_spec
 from .timeline import (
     get_absolute_words_in_range,
     get_words_for_keep_ranges,
@@ -409,6 +410,7 @@ def build_hook_title_ass(
     caption_font_px: int,
     position_y: Optional[float] = None,
     editor_style: Optional[Dict[str, Any]] = None,
+    layout_style: Optional[Dict[str, Any]] = None,
 ) -> Tuple[str, List[str]]:
     """Build the (style_line, dialogue_events) for a burned-in hook title.
 
@@ -434,6 +436,9 @@ def build_hook_title_ass(
     base_px = min(96, max(caption_font_px + 8, int(round(caption_font_px * 1.35))))
     if editor_style is not None:
         base_px = int(editor_style["base_px"])
+    elif layout_style and layout_style.get("size"):
+        # A custom layout's title size is in 1080-wide pixels.
+        base_px = max(20, int(round(int(layout_style["size"]) * video_width / 1080)))
     usable_width = video_width - 2 * max(48, int(video_width * HOOK_TITLE_SIDE_MARGIN_FRAC))
     max_chars = max(10, int(usable_width / (base_px * 0.52)))
     lines = _title_lines(title_text, max_chars)
@@ -492,9 +497,19 @@ def build_hook_title_ass(
         x = video_width * (0.5 + float(editor_style.get("x", 0)))
         y = margin_v + original_px * 1.2 * len(lines) / 2 + video_height * float(editor_style.get("y", 0))
         entrance += f"\\an5\\pos({round(x)},{round(y)})"
+    elif layout_style and layout_style.get("y") is not None:
+        entrance += f"\\an5\\pos({video_width // 2},{round(video_height * float(layout_style['y']))})"
     elif position_y is not None:
         entrance += f"\\an2\\pos({video_width // 2},{round(video_height * position_y)})"
-    if template.get("word_pop", True):
+    title_animation = (layout_style or {}).get("animation")
+    if title_animation == "none":
+        entrance = entrance.replace(f"\\fad({round(fade_in * 1000)},{round(fade_out * 1000)})", "")
+    pop = template.get("word_pop", True)
+    if title_animation == "pop":
+        pop = True
+    elif title_animation in ("fade", "none"):
+        pop = False
+    if pop:
         entrance += f"\\fscx90\\fscy90\\t(0,{round(fade_in * 1000)},\\fscx100\\fscy100)"
     events = [
         f"Dialogue: 1,{ass_timestamp(start)},{ass_timestamp(end)},Hook,,0,0,0,,"
@@ -590,7 +605,23 @@ def build_assemblyai_ass_subtitles(
     """
     transcript_data = load_cached_transcript_data(video_path)
 
+    layout_spec = current_layout_spec() if current_layout() == "custom" else None
+    caption_style = (layout_spec or {}).get("caption") or {}
+    title_style = (layout_spec or {}).get("title") or {}
     template = template_override or get_template(caption_template)
+    if template_override is None and caption_style:
+        # The layout's own caption choices win over the creation form's.
+        if caption_style.get("template"):
+            template = get_template(caption_style["template"])
+        template = dict(template)
+        if caption_style.get("animation"):
+            template["animation"] = caption_style["animation"]
+        if caption_style.get("max_words"):
+            template["max_words_per_line"] = caption_style["max_words"]
+        if caption_style.get("uppercase") is not None:
+            template["uppercase"] = caption_style["uppercase"]
+        font_family = caption_style.get("font") or font_family
+        font_size = caption_style.get("size") or font_size
     effective_font_family = font_family or template["font_family"]
     effective_font_size = int(font_size) if font_size else int(template["font_size"])
     effective_font_color = font_color or template["font_color"]
@@ -692,6 +723,8 @@ def build_assemblyai_ass_subtitles(
         output_duration = rendered_ranges_duration(keep_ranges)
     else:
         output_duration = max(0.0, clip_end - clip_start)
+    if title_style.get("enabled") is False:
+        hook_title = None
     if hook_title:
         hook_style_line, hook_events = build_hook_title_ass(
             hook_title,
@@ -699,8 +732,9 @@ def build_assemblyai_ass_subtitles(
             video_width,
             video_height,
             output_duration,
-            font_name,
+            ass_font_name(title_style["font"]) if title_style.get("font") else font_name,
             font_px,
+            layout_style=title_style or None,
             # An upper-third caption seam belongs to a reaction stack. Keep
             # the headline below the source subject, off the reactor's face.
             position_y=0.94 if position_y_override is not None and position_y_override < .4 else None,
@@ -753,7 +787,12 @@ def build_assemblyai_ass_subtitles(
     space_width = measure(" ")
     edge_px = max(style_bord, box_bord if word_box else 0) + shadow_px
     peak_scale = {"pop": 1.06, "bounce": 1.12, "glitch": 1.06}.get(animation, 1.0)
-    available_width = (get_subtitle_max_width(video_width) - 2 * edge_px) / peak_scale
+    max_text_width = (
+        max(200, int(video_width * (1 - 2 * caption_style["margin"])))
+        if caption_style.get("margin")
+        else get_subtitle_max_width(video_width)
+    )
+    available_width = (max_text_width - 2 * edge_px) / peak_scale
     emoji_width = space_width + font_px * 1.2
 
     def display_width(index: int, word: Dict[str, Any]) -> float:

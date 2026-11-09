@@ -37,5 +37,30 @@
   "mySaved": "Gespeicherte Layouts",
   "noSaved": "Noch keine gespeicherten Layouts.",
   "panelsCount": "{count, plural, one {# Bereich} other {# Bereiche}}",
-  "delete": "{name} löschen"
+  "delete": "{name} löschen",
+  "captionSection": "Untertitel",
+  "titleSection": "Titel",
+  "resetStyle": "Zurücksetzen",
+  "template": "Untertitelstil",
+  "font": "Schrift",
+  "animation": "Animation",
+  "defaultOption": "Standard des Stils",
+  "uppercase": "Großbuchstaben",
+  "sizeLabel": "Größe: {value}",
+  "maxWordsLabel": "Wörter pro Satz: {value}",
+  "marginLabel": "Seitenrand: {percent}%",
+  "titleEnabled": "KI-Überschrift anzeigen",
+  "titleYLabel": "Titelposition: {percent}% von oben",
+  "titleSizeLabel": "Titelgröße: {value}",
+  "titleHint": "Die Vorschau nutzt Beispieltexte. Schriften und Größen kommen dem Ergebnis nahe, sind aber nicht identisch.",
+  "animationNames": {
+    "none": "Keine",
+    "karaoke": "Karaoke",
+    "pop": "Pop",
+    "fade": "Einblenden",
+    "bounce": "Hüpfen",
+    "flicker": "Flackern",
+    "glitch": "Glitch",
+    "typewriter": "Schreibmaschine"
+  }
 }

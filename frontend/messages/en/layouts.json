@@ -37,5 +37,30 @@
   "mySaved": "Saved layouts",
   "noSaved": "No saved layouts yet.",
   "panelsCount": "{count, plural, one {# panel} other {# panels}}",
-  "delete": "Delete {name}"
+  "delete": "Delete {name}",
+  "captionSection": "Captions",
+  "titleSection": "Title",
+  "resetStyle": "Reset",
+  "template": "Caption style",
+  "font": "Font",
+  "animation": "Animation",
+  "defaultOption": "Template default",
+  "uppercase": "Uppercase",
+  "sizeLabel": "Size: {value}",
+  "maxWordsLabel": "Words per phrase: {value}",
+  "marginLabel": "Side margin: {percent}%",
+  "titleEnabled": "Show the AI headline",
+  "titleYLabel": "Title position: {percent}% from the top",
+  "titleSizeLabel": "Title size: {value}",
+  "titleHint": "The preview uses sample text. Fonts and sizes match the render closely, not exactly.",
+  "animationNames": {
+    "none": "None",
+    "karaoke": "Karaoke",
+    "pop": "Pop",
+    "fade": "Fade",
+    "bounce": "Bounce",
+    "flicker": "Flicker",
+    "glitch": "Glitch",
+    "typewriter": "Typewriter"
+  }
 }

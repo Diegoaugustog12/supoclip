@@ -37,5 +37,30 @@
   "mySaved": "Tata letak tersimpan",
   "noSaved": "Belum ada tata letak tersimpan.",
   "panelsCount": "{count, plural, other {# panel}}",
-  "delete": "Hapus {name}"
+  "delete": "Hapus {name}",
+  "captionSection": "Teks",
+  "titleSection": "Judul",
+  "resetStyle": "Atur ulang",
+  "template": "Gaya teks",
+  "font": "Font",
+  "animation": "Animasi",
+  "defaultOption": "Bawaan gaya",
+  "uppercase": "Huruf besar",
+  "sizeLabel": "Ukuran: {value}",
+  "maxWordsLabel": "Kata per frasa: {value}",
+  "marginLabel": "Margin samping: {percent}%",
+  "titleEnabled": "Tampilkan judul dari AI",
+  "titleYLabel": "Posisi judul: {percent}% dari atas",
+  "titleSizeLabel": "Ukuran judul: {value}",
+  "titleHint": "Pratinjau memakai teks contoh. Font dan ukuran mendekati hasil, tidak persis sama.",
+  "animationNames": {
+    "none": "Tidak ada",
+    "karaoke": "Karaoke",
+    "pop": "Pop",
+    "fade": "Pudar",
+    "bounce": "Memantul",
+    "flicker": "Berkedip",
+    "glitch": "Glitch",
+    "typewriter": "Mesin tik"
+  }
 }

@@ -18,7 +18,6 @@ import { changedSettings, invalidSetting, WorkflowAdvancedSettings, type Advance
 import { FONT_SEARCH_THRESHOLD, formatUploadLimit, getYouTubeThumbnailUrl, maxVideoUploadBytes, readVideoDuration, uploadVideoFile, validateVideoSourceUrl } from "@/lib/video-upload";
 import { AppShell } from "@/components/app/app-shell";
 import { GenerationCard } from "@/components/app/generation-card";
-import { VideoDownloadStatus } from "@/components/app/video-download-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -881,8 +880,6 @@ export default function HomeApp() {
           </p>
 
           {upgradeState && <PlanStatusNudge state={upgradeState} onUpgrade={openUpgrade} />}
-
-          <VideoDownloadStatus />
 
           {workflowsEnabled && (
             <section className="mt-8 animate-rise" aria-labelledby="what-to-make">

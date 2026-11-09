@@ -10,7 +10,7 @@ from ...auth_headers import resolve_authenticated_user_id
 from ...config import get_config
 from ...database import get_db
 from ...media.custom_layout import normalize_layout_spec
-from ...media.layout_preview import PreviewError, preview_frame
+from ...media.layout_preview import PreviewError, preview_clip, preview_frame
 from ...repositories.layout_preset_repository import (
     MAX_PRESETS_PER_USER,
     LayoutPresetRepository,
@@ -96,3 +96,24 @@ async def layout_preview(request: Request, db: AsyncSession = Depends(get_db)):
     except PreviewError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from None
     return Response(content=frame, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
+@router.post("/preview-clip")
+async def layout_preview_clip(request: Request, db: AsyncSession = Depends(get_db)):
+    """Five seconds of a YouTube link, as an MP4."""
+    await _user_id(request, db)
+    try:
+        payload = await request.json()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Body must be JSON") from None
+    url = payload.get("url") if isinstance(payload, dict) else None
+    seconds = payload.get("time", 0) if isinstance(payload, dict) else 0
+    if not isinstance(url, str) or isinstance(seconds, bool) or not isinstance(seconds, (int, float)):
+        raise HTTPException(status_code=422, detail="url and a numeric time are required")
+    if not math.isfinite(seconds) or not 0 <= seconds <= 60 * 60 * 24:
+        raise HTTPException(status_code=422, detail="time is out of range")
+    try:
+        frame = await run_in_thread(preview_clip, url, float(seconds))
+    except PreviewError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+    return Response(content=frame, media_type="video/mp4", headers={"Cache-Control": "no-store"})

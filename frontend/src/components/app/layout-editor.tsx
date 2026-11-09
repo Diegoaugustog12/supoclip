@@ -205,11 +205,29 @@ export function LayoutEditor() {
   // Plays 5 seconds of the chosen file through the same crops, so motion can be judged.
   const [playing, setPlaying] = useState(false);
   async function playClip() {
-    if (!file || playing) return;
+    if (playing || (source === "file" ? !file : !url.trim())) return;
     setPlaying(true);
     const video = document.createElement("video");
-    const url = URL.createObjectURL(file);
-    video.src = url;
+    let objectUrl = "";
+    try {
+      if (source === "file" && file) {
+        objectUrl = URL.createObjectURL(file);
+      } else {
+        const response = await fetch("/api/layouts/preview-clip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url.trim(), time: Number(time) || 0 }),
+        });
+        if (!response.ok) throw new Error(await errorText(response, t("previewError")));
+        objectUrl = URL.createObjectURL(await response.blob());
+      }
+    } catch (error) {
+      setFrameError(error instanceof Error ? error.message : t("previewError"));
+      setPlaying(false);
+      return;
+    }
+    const fromFile = source === "file";
+    video.src = objectUrl;
     video.muted = true;
     video.playsInline = true;
     try {
@@ -217,8 +235,10 @@ export function LayoutEditor() {
         video.onloadedmetadata = () => resolve();
         video.onerror = () => reject(new Error(t("fileError")));
       });
-      video.currentTime = Number(time) || 0;
-      await new Promise<void>((resolve) => { video.onseeked = () => resolve(); });
+      if (fromFile) {
+        video.currentTime = Number(time) || 0;
+        await new Promise<void>((resolve) => { video.onseeked = () => resolve(); });
+      }
       live.current = video;
       await video.play();
       const end = video.currentTime + 5;
@@ -235,7 +255,7 @@ export function LayoutEditor() {
     } finally {
       video.pause();
       live.current = null;
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(objectUrl);
       setPlaying(false);
       paint();
     }
@@ -563,8 +583,7 @@ export function LayoutEditor() {
 
           <aside className="space-y-3 lg:sticky lg:top-4 lg:self-start">
             <p className="text-sm font-medium">{t("outputPreview")}</p>
-            <Button size="sm" variant="outline" disabled={playing || !file || source !== "file"} onClick={() => void playClip()}>{playing ? t("playing") : t("playClip")}</Button>
-            {(source !== "file" || !file) && <p className="max-w-[300px] text-xs text-muted-foreground">{t("playNeedsFile")}</p>}
+            <Button size="sm" variant="outline" disabled={playing || (source === "file" ? !file : !url.trim())} onClick={() => void playClip()}>{playing ? t("playing") : t("playClip")}</Button>
             <canvas ref={preview} width={PREVIEW_W} height={Math.round((PREVIEW_W * OUT_H) / OUT_W)} className="rounded-lg border bg-black" aria-label={t("outputPreview")} />
             <div className="space-y-2">
               <Label htmlFor="layout-name">{t("nameLabel")}</Label>

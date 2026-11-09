@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 PREVIEW_WIDTH = 1280
 FFMPEG_TIMEOUT = 45
+CLIP_SECONDS = 5
+CLIP_WIDTH = 854
+CLIP_TIMEOUT = 90
 
 
 class PreviewError(Exception):
@@ -85,3 +88,38 @@ def preview_frame(url: str, seconds: float) -> bytes:
     if duration and seconds >= duration:
         seconds = max(0.0, duration - 1)
     return _frame_from(stream, seconds, headers)
+
+
+def _clip_from(source: str, seconds: float, headers: Optional[dict] = None) -> bytes:
+    """Five silent seconds as a fragmented MP4 (streamable through a pipe)."""
+    command = ["ffmpeg", "-v", "error", "-y"]
+    if headers:
+        command += ["-headers", "".join(f"{k}: {v}\r\n" for k, v in headers.items())]
+    command += [
+        "-ss", f"{max(0.0, seconds):.2f}", "-i", source, "-t", str(CLIP_SECONDS), "-an",
+        "-vf", f"scale='min({CLIP_WIDTH},iw)':-2", "-c:v", "libx264", "-preset", "veryfast",
+        "-crf", "28", "-pix_fmt", "yuv420p", "-movflags", "frag_keyframe+empty_moov",
+        "-f", "mp4", "-",
+    ]
+    try:
+        result = subprocess.run(command, capture_output=True, timeout=CLIP_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise PreviewError("Timed out loading the video clip") from None
+    if result.returncode != 0 or not result.stdout:
+        logger.warning("Preview clip failed: %s", result.stderr[-300:].decode(errors="replace"))
+        raise PreviewError("Could not read a clip from this video")
+    return result.stdout
+
+
+def preview_clip(url: str, seconds: float) -> bytes:
+    """MP4 bytes of 5 seconds of a YouTube video starting at ``seconds``."""
+    video_id = get_youtube_video_id(url)
+    if not video_id:
+        raise PreviewError("Only YouTube links can be previewed for now")
+    cached = _cached_file(video_id)
+    if cached is not None:
+        return _clip_from(str(cached), seconds)
+    stream, headers, duration = _stream_url(f"https://www.youtube.com/watch?v={video_id}")
+    if duration and seconds >= duration:
+        seconds = max(0.0, duration - CLIP_SECONDS)
+    return _clip_from(stream, seconds, headers)

@@ -10,6 +10,11 @@ Add a line here when a pull request changes something a user can see. Use **New*
 - **New:** Four caption styles, Tags, Neon Flicker, Retro Glitch and Typewriter, with flicker, glitch and typewriter animations. ([#350](https://github.com/FujiwaraChoki/supoclip/pull/350))
 - **New:** Create clips without captions, then add captions to only the clips you pick, in any style, from the generation page. ([#350](https://github.com/FujiwaraChoki/supoclip/pull/350))
 - **Fixed:** A webcam cut out over the game, in any corner of the video, is now found when you choose a webcam layout. ([#350](https://github.com/FujiwaraChoki/supoclip/pull/350))
+- **New:** A Layouts page, under Library, to draw your own vertical layout from a YouTube link or a video file on your computer: one or two panels, the part of the frame each shows, the split between them, and where captions sit. Save layouts and pick them when you create clips. ([Diegoaugustog12/supoclip#1](https://github.com/Diegoaugustog12/supoclip/pull/1))
+- **New:** Layouts also set the caption style, size, font, animation, words per phrase and margins, and the title's position, size, font and animation. ([Diegoaugustog12/supoclip#1](https://github.com/Diegoaugustog12/supoclip/pull/1))
+- **Improved:** A layout panel can show its whole crop over a blurred background, so a wide game is no longer cut at the sides. ([Diegoaugustog12/supoclip#1](https://github.com/Diegoaugustog12/supoclip/pull/1))
+- **Improved:** In the clip studio, a Layout picker in the Framing tab rebuilds a clip's picture with another layout and keeps your cuts, captions and B-roll. ([Diegoaugustog12/supoclip#1](https://github.com/Diegoaugustog12/supoclip/pull/1))
+- **Fixed:** Opening a clip in the studio keeps the layout it was made with instead of going back to automatic. ([Diegoaugustog12/supoclip#1](https://github.com/Diegoaugustog12/supoclip/pull/1))
 
 ## 2026-11-07
 

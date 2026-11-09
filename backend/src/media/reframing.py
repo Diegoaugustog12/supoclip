@@ -1489,6 +1489,16 @@ def describe_vertical_layout(
     crop_w, crop_h = compute_vertical_crop_dims(width, height)
     duration = ffprobe_duration(input_path)
 
+    # A layout the user drew needs no detection: it is the crops they chose.
+    from .layout_choice import current_layout, current_layout_spec
+
+    if current_layout() == "custom" and current_layout_spec():
+        from .custom_layout import build_custom_layout
+
+        custom = build_custom_layout(width, height, current_layout_spec())
+        logger.info("Custom layout: panels %s", custom["heights"])
+        return _described("custom", custom["video_filter"], "complex", custom["caption_y"])
+
     def bleed_caption(samples) -> Optional[float]:
         bottom = dominant_face_bottom(samples, height)
         if bottom is None:

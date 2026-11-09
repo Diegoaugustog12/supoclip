@@ -472,7 +472,9 @@ class TaskService(ClipEditingMixin):
         from ..media.layout_choice import bind_layout
 
         metadata = await self.task_repo.load_source_metadata(self.db, task_id)
-        return bind_layout(metadata.get("layout") if isinstance(metadata, dict) else None)
+        if not isinstance(metadata, dict):
+            return bind_layout(None)
+        return bind_layout(metadata.get("layout"), metadata.get("layout_spec"))
 
     @exclusive_task_run
     @media_work

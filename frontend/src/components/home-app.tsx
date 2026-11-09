@@ -163,7 +163,15 @@ export default function HomeApp() {
   const [captionTemplate, setCaptionTemplate] = useState("default");
   const [availableTemplates, setAvailableTemplates] = useState<CaptionTemplate[]>([]);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("vertical");
-  const [layout, setLayout] = useState<LayoutChoice>("auto");
+  const [layout, setLayout] = useState<LayoutChoice | "custom">("auto");
+  const [layoutId, setLayoutId] = useState<string | null>(null);
+  const [savedLayouts, setSavedLayouts] = useState<Array<{ id: string; name: string }>>([]);
+  useEffect(() => {
+    fetch("/api/layouts", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : { layouts: [] }))
+      .then((body) => setSavedLayouts(Array.isArray(body.layouts) ? body.layouts : []))
+      .catch(() => setSavedLayouts([]));
+  }, []);
   const [clipLength, setClipLength] = useState<ClipLength>("auto");
   const [clipLengthSaveError, setClipLengthSaveError] = useState(false);
   const [isClipLengthLoading, setIsClipLengthLoading] = useState(false);
@@ -777,7 +785,12 @@ export default function HomeApp() {
         if (activeWorkflow === "series" && partCount !== "auto") options.part_count = partCount;
       }
       // Auto sends exactly the request it always has.
-      if (outputFormat === "vertical" && layout !== "auto") request.layout = layout;
+      if (outputFormat === "vertical" && layout === "custom" && layoutId) {
+        request.layout = "custom";
+        request.layout_id = layoutId;
+      } else if (outputFormat === "vertical" && layout !== "auto" && layout !== "custom") {
+        request.layout = layout;
+      }
       if (advancedCount > 0) options.advanced = advancedChanges;
       if (Object.keys(options).length > 0) request.workflow_options = options;
       if (sentInstructions) request.instructions = sentInstructions;
@@ -1266,13 +1279,31 @@ export default function HomeApp() {
                             type="button"
                             role="radio"
                             aria-checked={layout === id}
-                            onClick={() => setLayout(id)}
+                            onClick={() => { setLayout(id); setLayoutId(null); }}
                             className={cn("rounded-xl border p-3 text-left transition-colors hover:bg-accent", layout === id && "border-foreground ring-1 ring-foreground")}
                           >
                             <span className="block text-sm font-medium">{t(`layoutOptions.${id}.label`)}</span>
                             <span className="block text-xs text-muted-foreground">{t(`layoutOptions.${id}.hint`)}</span>
                           </button>
                         ))}
+                      </div>
+                      <p className="mb-2 mt-4 px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("myLayouts")}</p>
+                      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("myLayouts")}>
+                        {savedLayouts.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={layout === "custom" && layoutId === item.id}
+                            onClick={() => { setLayout("custom"); setLayoutId(item.id); }}
+                            className={cn("rounded-xl border p-3 text-left text-sm font-medium transition-colors hover:bg-accent", layout === "custom" && layoutId === item.id && "border-foreground ring-1 ring-foreground")}
+                          >
+                            <span className="block truncate">{item.name}</span>
+                          </button>
+                        ))}
+                        <Link href="/layouts" className="rounded-xl border border-dashed p-3 text-left text-sm text-muted-foreground transition-colors hover:bg-accent">
+                          {t("createLayout")}
+                        </Link>
                       </div>
                     </div>
                   )}

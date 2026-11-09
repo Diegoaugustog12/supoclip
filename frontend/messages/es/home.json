@@ -50,6 +50,8 @@
   "livePreview": "Vista previa en vivo",
   "framing": "Encuadre",
   "layoutTitle": "Diseño del 9:16 automático",
+  "myLayouts": "Mis diseños",
+  "createLayout": "Dibujar un diseño nuevo",
   "layoutOptions": {
     "auto": { "label": "Automático", "hint": "Elige el mejor diseño por escena" },
     "reaction_top": { "label": "Webcam arriba", "hint": "Webcam arriba, juego o vídeo abajo" },

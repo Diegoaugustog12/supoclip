@@ -50,6 +50,8 @@
   "livePreview": "Pratinjau langsung",
   "framing": "Framing",
   "layoutTitle": "Tata letak Auto 9:16",
+  "myLayouts": "Tata letak saya",
+  "createLayout": "Gambar tata letak baru",
   "layoutOptions": {
     "auto": { "label": "Otomatis", "hint": "Memilih tata letak terbaik per adegan" },
     "reaction_top": { "label": "Webcam di atas", "hint": "Webcam di atas, game atau video di bawah" },

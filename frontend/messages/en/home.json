@@ -50,6 +50,8 @@
   "livePreview": "Live preview",
   "framing": "Framing",
   "layoutTitle": "Layout for Auto 9:16",
+  "myLayouts": "My layouts",
+  "createLayout": "Draw a new layout",
   "layoutOptions": {
     "auto": { "label": "Automatic", "hint": "Picks the best layout per scene" },
     "reaction_top": { "label": "Webcam on top", "hint": "Webcam above, game or video below" },

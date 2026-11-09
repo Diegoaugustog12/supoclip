@@ -311,6 +311,18 @@ CREATE TABLE user_feature_tours (
     PRIMARY KEY (user_id, tour_id)
 );
 CREATE INDEX ix_user_feature_tours_tour ON user_feature_tours (tour_id);
+-- Layouts drawn on the layout page (backend/src/media/custom_layout.py).
+-- `spec` is the validated JSON, and a task copies it into its own metadata when it is
+-- created, so editing or deleting a preset never changes a run in progress.
+CREATE TABLE layout_presets (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(80) NOT NULL,
+    spec JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX ix_layout_presets_user ON layout_presets (user_id, created_at DESC);
 -- Feature flags, switched per platform from /admin without a deploy.
 -- Read by backend/src/feature_flags.py, which caches them for a few seconds.
 -- admins_bypass keeps a flag on for admins on every platform while it is off for everyone else.

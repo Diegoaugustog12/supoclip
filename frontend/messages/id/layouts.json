@@ -72,5 +72,6 @@
   "fileHint": "Bingkai dibaca di browser Anda dan berkas tidak diunggah. Pilih momen saat webcam dan game terlihat.",
   "fileError": "Browser Anda tidak dapat membaca video ini. Coba MP4 (H.264).",
   "playClip": "Putar 5 detik",
-  "playing": "Memutar…"
+  "playing": "Memutar…",
+  "playNeedsFile": "Pemutaran berfungsi dengan file video dari komputer Anda. Pilih “File” di atas dan muat videonya."
 }

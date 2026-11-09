@@ -72,5 +72,6 @@
   "fileHint": "El fotograma se lee en tu navegador y el archivo no se sube. Usa un momento en el que se vean la webcam y el juego.",
   "fileError": "Tu navegador no pudo leer este vídeo. Prueba con un MP4 (H.264).",
   "playClip": "Reproducir 5 segundos",
-  "playing": "Reproduciendo…"
+  "playing": "Reproduciendo…",
+  "playNeedsFile": "La reproducción funciona con un archivo de vídeo de tu equipo. Elige “Archivo” arriba y cárgalo."
 }

@@ -72,5 +72,6 @@
   "fileHint": "Das Bild wird in deinem Browser gelesen, die Datei wird nicht hochgeladen. Nimm einen Moment, in dem Webcam und Spiel zu sehen sind.",
   "fileError": "Dein Browser konnte dieses Video nicht lesen. Versuche ein MP4 (H.264).",
   "playClip": "5 Sekunden abspielen",
-  "playing": "Wird abgespielt…"
+  "playing": "Wird abgespielt…",
+  "playNeedsFile": "Die Wiedergabe funktioniert mit einer Videodatei von deinem Computer. Wähle oben „Datei“ und lade sie."
 }

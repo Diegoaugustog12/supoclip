@@ -563,9 +563,8 @@ export function LayoutEditor() {
 
           <aside className="space-y-3 lg:sticky lg:top-4 lg:self-start">
             <p className="text-sm font-medium">{t("outputPreview")}</p>
-            {source === "file" && file && (
-              <Button size="sm" variant="outline" disabled={playing} onClick={() => void playClip()}>{playing ? t("playing") : t("playClip")}</Button>
-            )}
+            <Button size="sm" variant="outline" disabled={playing || !file || source !== "file"} onClick={() => void playClip()}>{playing ? t("playing") : t("playClip")}</Button>
+            {(source !== "file" || !file) && <p className="max-w-[300px] text-xs text-muted-foreground">{t("playNeedsFile")}</p>}
             <canvas ref={preview} width={PREVIEW_W} height={Math.round((PREVIEW_W * OUT_H) / OUT_W)} className="rounded-lg border bg-black" aria-label={t("outputPreview")} />
             <div className="space-y-2">
               <Label htmlFor="layout-name">{t("nameLabel")}</Label>

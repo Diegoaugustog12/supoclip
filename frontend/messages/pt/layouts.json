@@ -72,5 +72,6 @@
   "fileHint": "O quadro é lido no seu navegador e o arquivo não é enviado. Use um momento em que a webcam e o jogo aparecem.",
   "fileError": "Seu navegador não conseguiu ler este vídeo. Tente um MP4 (H.264).",
   "playClip": "Reproduzir 5 segundos",
-  "playing": "Reproduzindo…"
+  "playing": "Reproduzindo…",
+  "playNeedsFile": "O player funciona com um arquivo de vídeo do seu computador. Escolha “Arquivo” acima e carregue o vídeo."
 }

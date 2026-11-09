@@ -64,5 +64,11 @@
     "typewriter": "Mesin tik"
   },
   "showWhole": "{panel}: tampilkan seluruh potongan (latar buram)",
-  "showWholeHint": "Menampilkan semua isi kotak, meski bentuknya tidak sama dengan panel. Ubah ukuran kotak dengan bebas."
+  "showWholeHint": "Menampilkan semua isi kotak, meski bentuknya tidak sama dengan panel. Ubah ukuran kotak dengan bebas.",
+  "sourceLabel": "Asal video",
+  "sourceLink": "Tautan YouTube",
+  "sourceFile": "Berkas dari komputer saya",
+  "fileLabel": "Berkas video",
+  "fileHint": "Bingkai dibaca di browser Anda dan berkas tidak diunggah. Pilih momen saat webcam dan game terlihat.",
+  "fileError": "Browser Anda tidak dapat membaca video ini. Coba MP4 (H.264)."
 }

@@ -64,5 +64,11 @@
     "typewriter": "Schreibmaschine"
   },
   "showWhole": "{panel}: ganzen Ausschnitt zeigen (unscharfer Hintergrund)",
-  "showWholeHint": "Zeigt alles in der Box, auch wenn die Form nicht zum Bereich passt. Die Box lässt sich frei skalieren."
+  "showWholeHint": "Zeigt alles in der Box, auch wenn die Form nicht zum Bereich passt. Die Box lässt sich frei skalieren.",
+  "sourceLabel": "Woher das Video kommt",
+  "sourceLink": "YouTube-Link",
+  "sourceFile": "Datei von meinem Computer",
+  "fileLabel": "Videodatei",
+  "fileHint": "Das Bild wird in deinem Browser gelesen, die Datei wird nicht hochgeladen. Nimm einen Moment, in dem Webcam und Spiel zu sehen sind.",
+  "fileError": "Dein Browser konnte dieses Video nicht lesen. Versuche ein MP4 (H.264)."
 }

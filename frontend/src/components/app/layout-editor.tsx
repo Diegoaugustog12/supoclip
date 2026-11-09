@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { frameFromFile } from "@/lib/video-frame";
 import {
   type CaptionStyle,
   type Crop,
@@ -52,6 +53,8 @@ async function errorText(response: Response, fallback: string) {
 
 export function LayoutEditor() {
   const t = useTranslations("layouts");
+  const [source, setSource] = useState<"link" | "file">("link");
+  const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState("");
   const [time, setTime] = useState("30");
   const [frame, setFrame] = useState<Frame | null>(null);
@@ -198,13 +201,25 @@ export function LayoutEditor() {
     setLoadingFrame(true);
     setFrameError(null);
     try {
-      const response = await fetch("/api/layouts/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), time: Number(time) || 0 }),
-      });
-      if (!response.ok) throw new Error(await errorText(response, t("previewError")));
-      const src = URL.createObjectURL(await response.blob());
+      let blob: Blob;
+      if (source === "file") {
+        // Read in the browser: the file never leaves this computer.
+        if (!file) return;
+        try {
+          blob = await frameFromFile(file, Number(time) || 0);
+        } catch {
+          throw new Error(t("fileError"));
+        }
+      } else {
+        const response = await fetch("/api/layouts/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url.trim(), time: Number(time) || 0 }),
+        });
+        if (!response.ok) throw new Error(await errorText(response, t("previewError")));
+        blob = await response.blob();
+      }
+      const src = URL.createObjectURL(blob);
       const image = new Image();
       await new Promise<void>((resolve, reject) => {
         image.onload = () => resolve();
@@ -303,15 +318,26 @@ export function LayoutEditor() {
   return (
     <div className="space-y-8">
       <section className="space-y-3">
-        <Label htmlFor="layout-url">{t("urlLabel")}</Label>
+        <div className="flex gap-2" role="radiogroup" aria-label={t("sourceLabel")}>
+          {(["link", "file"] as const).map((kind) => (
+            <Button key={kind} type="button" role="radio" aria-checked={source === kind} variant={source === kind ? "default" : "outline"} size="sm" onClick={() => setSource(kind)}>
+              {kind === "link" ? t("sourceLink") : t("sourceFile")}
+            </Button>
+          ))}
+        </div>
+        <Label htmlFor={source === "link" ? "layout-url" : "layout-file"}>{source === "link" ? t("urlLabel") : t("fileLabel")}</Label>
         <div className="flex flex-wrap gap-2">
-          <Input id="layout-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t("urlPlaceholder")} className="min-w-64 flex-1" />
+          {source === "link" ? (
+            <Input id="layout-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t("urlPlaceholder")} className="min-w-64 flex-1" />
+          ) : (
+            <Input id="layout-file" type="file" accept="video/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="min-w-64 flex-1" />
+          )}
           <Input type="number" min={0} aria-label={t("timeLabel")} value={time} onChange={(e) => setTime(e.target.value)} className="w-24" />
-          <Button onClick={() => void loadFrame()} disabled={!url.trim() || loadingFrame}>
+          <Button onClick={() => void loadFrame()} disabled={(source === "link" ? !url.trim() : !file) || loadingFrame}>
             {loadingFrame ? t("loading") : t("loadPreview")}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">{t("timeHint")}</p>
+        <p className="text-xs text-muted-foreground">{source === "link" ? t("timeHint") : t("fileHint")}</p>
         {frameError && <p role="alert" className="text-sm text-destructive">{frameError}</p>}
       </section>
 

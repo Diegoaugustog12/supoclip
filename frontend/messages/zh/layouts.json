@@ -64,5 +64,11 @@
     "typewriter": "打字机"
   },
   "showWhole": "{panel}：显示完整裁剪区域（模糊背景）",
-  "showWholeHint": "显示方框内的全部内容，即使形状与面板不同。可自由调整方框大小。"
+  "showWholeHint": "显示方框内的全部内容，即使形状与面板不同。可自由调整方框大小。",
+  "sourceLabel": "视频来源",
+  "sourceLink": "YouTube 链接",
+  "sourceFile": "我电脑上的文件",
+  "fileLabel": "视频文件",
+  "fileHint": "画面在浏览器中读取，文件不会上传。请选择同时能看到摄像头和游戏的时刻。",
+  "fileError": "您的浏览器无法读取此视频。请尝试 MP4 (H.264)。"
 }

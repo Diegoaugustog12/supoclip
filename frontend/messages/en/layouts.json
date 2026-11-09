@@ -64,5 +64,11 @@
     "typewriter": "Typewriter"
   },
   "showWhole": "{panel}: show the whole crop (blurred background)",
-  "showWholeHint": "Shows everything inside the box, even if it is not the panel's shape. Resize the box freely."
+  "showWholeHint": "Shows everything inside the box, even if it is not the panel's shape. Resize the box freely.",
+  "sourceLabel": "Where the video comes from",
+  "sourceLink": "YouTube link",
+  "sourceFile": "File from my computer",
+  "fileLabel": "Video file",
+  "fileHint": "The frame is read in your browser and the file is not uploaded. Use a moment where the webcam and the game are both visible.",
+  "fileError": "Your browser could not read this video. Try an MP4 (H.264)."
 }

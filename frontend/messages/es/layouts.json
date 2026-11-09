@@ -64,5 +64,11 @@
     "typewriter": "Máquina de escribir"
   },
   "showWhole": "{panel}: mostrar el recorte completo (fondo desenfocado)",
-  "showWholeHint": "Muestra todo lo que hay dentro de la caja, aunque no tenga la forma del panel. Cambia su tamaño libremente."
+  "showWholeHint": "Muestra todo lo que hay dentro de la caja, aunque no tenga la forma del panel. Cambia su tamaño libremente.",
+  "sourceLabel": "De dónde viene el vídeo",
+  "sourceLink": "Enlace de YouTube",
+  "sourceFile": "Archivo de mi ordenador",
+  "fileLabel": "Archivo de vídeo",
+  "fileHint": "El fotograma se lee en tu navegador y el archivo no se sube. Usa un momento en el que se vean la webcam y el juego.",
+  "fileError": "Tu navegador no pudo leer este vídeo. Prueba con un MP4 (H.264)."
 }

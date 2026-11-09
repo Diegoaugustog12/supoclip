@@ -64,5 +64,11 @@
     "typewriter": "Máquina de escrever"
   },
   "showWhole": "{panel}: mostrar o recorte inteiro (fundo desfocado)",
-  "showWholeHint": "Mostra tudo que está dentro da caixa, mesmo fora do formato do painel. Redimensione a caixa livremente."
+  "showWholeHint": "Mostra tudo que está dentro da caixa, mesmo fora do formato do painel. Redimensione a caixa livremente.",
+  "sourceLabel": "De onde vem o vídeo",
+  "sourceLink": "Link do YouTube",
+  "sourceFile": "Arquivo do meu computador",
+  "fileLabel": "Arquivo de vídeo",
+  "fileHint": "O quadro é lido no seu navegador e o arquivo não é enviado. Use um momento em que a webcam e o jogo aparecem.",
+  "fileError": "Seu navegador não conseguiu ler este vídeo. Tente um MP4 (H.264)."
 }

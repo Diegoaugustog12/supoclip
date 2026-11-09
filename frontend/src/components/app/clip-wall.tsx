@@ -283,6 +283,7 @@ export function ClipFocus({ clip, taskId, index, total, busy, editable, onNaviga
                   </section>
                 )}
 
+                {editable && clip.text && <PostCopyPanel taskId={taskId} clipId={clip.id} />}
                 {clip.text && <TranscriptPreview text={clip.text} clipTitle={clipTitle(clip, t)} />}
                 {children}
               </div>
@@ -307,6 +308,55 @@ export function ClipFocus({ clip, taskId, index, total, busy, editable, onNaviga
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Catchy description and hashtags for posting this clip, written on request. */
+function PostCopyPanel({ taskId, clipId }: { taskId: string; clipId: string }) {
+  const t = useTranslations("task");
+  const [state, setState] = useState<{ description: string; hashtags: string[] } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  useEffect(() => { setState(null); setError(false); }, [clipId]);
+
+  async function generate() {
+    setLoading(true);
+    setError(false);
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/clips/${clipId}/post-copy`, { method: "POST" });
+      if (!response.ok) throw new Error();
+      setState(await response.json());
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+  const copy = (text: string) => { void navigator.clipboard?.writeText(text); };
+
+  return (
+    <section className="space-y-3 rounded-xl border p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold">{t("postCopy.heading")}</h3>
+        <Button size="sm" variant="outline" onClick={() => void generate()} disabled={loading}>
+          {loading ? <Loader2 className="size-4 animate-spin" /> : null}{state ? t("postCopy.again") : t("postCopy.generate")}
+        </Button>
+      </div>
+      {error && <p role="alert" className="text-sm text-destructive">{t("postCopy.error")}</p>}
+      {state && (
+        <div className="space-y-3 text-sm">
+          <p className="whitespace-pre-wrap">{state.description}</p>
+          <p className="flex flex-wrap gap-1.5">
+            {state.hashtags.map((tag) => <span key={tag} className="rounded-md bg-muted px-2 py-1 text-xs">{tag}</span>)}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => copy(state.description)}>{t("postCopy.copyText")}</Button>
+            <Button size="sm" variant="outline" onClick={() => copy(state.hashtags.join(" "))}>{t("postCopy.copyTags")}</Button>
+            <Button size="sm" onClick={() => copy(`${state.description}\n\n${state.hashtags.join(" ")}`)}>{t("postCopy.copyAll")}</Button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

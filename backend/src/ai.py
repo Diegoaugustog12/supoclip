@@ -1772,3 +1772,40 @@ async def get_most_relevant_parts_by_transcript(
 def get_most_relevant_parts_sync(transcript: str) -> TranscriptAnalysis:
     """Synchronous wrapper for the async function."""
     return asyncio.run(get_most_relevant_parts_by_transcript(transcript))
+
+
+class PostCopy(BaseModel):
+    """Caption text and hashtags for posting one clip."""
+
+    description: str = Field(description="Short, catchy post caption (1-3 sentences, may use 1-3 emojis)")
+    hashtags: List[str] = Field(description="12 to 15 hashtags, each starting with #, no spaces")
+
+
+post_copy_system_prompt = """You write social media post copy for short vertical video clips (TikTok, Instagram Reels, YouTube Shorts, Facebook Reels).
+Write in the same language as the clip transcript.
+- description: a catchy, curiosity-driven caption grounded ONLY in what happens in the clip (1-3 short sentences). Open with a hook. Do not invent facts. No hashtags inside it.
+- hashtags: 12 to 15 hashtags that help people find the video. Mix: 3-4 broad high-traffic tags (e.g. #fyp #viral #shorts), 4-5 about the topic and action in the clip, 3-4 about the people, creators, channel or game named or clearly present in the transcript, and 1-2 niche tags. Use lowercase without accents or spaces. Never use misleading or unrelated tags."""
+
+
+async def generate_post_copy(title: Optional[str], transcript: str) -> PostCopy:
+    runtime_config = get_config()
+    apply_settings_to_process_env(runtime_config.as_runtime_settings())
+    config_error = _get_missing_llm_key_error(runtime_config.llm, runtime_config)
+    if config_error:
+        raise RuntimeError(config_error)
+    agent = Agent[None, PostCopy](
+        model=_build_transcript_model(runtime_config, runtime_config.llm),
+        output_type=NativeOutput(PostCopy, strict=True) if _uses_native_output(runtime_config.llm) else PostCopy,
+        system_prompt=post_copy_system_prompt,
+        output_retries=2,
+    )
+    prompt = f"Clip title: {title or '(none)'}\nClip transcript:\n{transcript[:6000]}"
+    result = await _run_transcript_analysis(agent, prompt, timeout_seconds=60)
+    copy = result.output
+    seen, tags = set(), []
+    for raw in copy.hashtags:
+        tag = "#" + re.sub(r"[^\w]", "", raw.lstrip("#"), flags=re.UNICODE)
+        if len(tag) > 1 and tag.lower() not in seen:
+            seen.add(tag.lower())
+            tags.append(tag)
+    return PostCopy(description=copy.description.strip(), hashtags=tags[:15])

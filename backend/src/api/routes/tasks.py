@@ -1757,3 +1757,26 @@ async def list_dead_letter_tasks(request: Request, db: AsyncSession = Depends(ge
         return {"total": len(items), "tasks": items}
     finally:
         await redis_client.aclose()
+
+
+@router.post("/{task_id}/clips/{clip_id}/post-copy")
+async def clip_post_copy(
+    task_id: str, clip_id: str, request: Request, db: AsyncSession = Depends(get_db)
+):
+    """A catchy description and hashtags for posting one clip."""
+    task_service = TaskService(db)
+    await _require_task_reader(request, task_service, db, task_id)
+    clip = await task_service.clip_repo.get_clip_by_id(db, clip_id)
+    if not clip or clip.get("task_id") != task_id:
+        raise HTTPException(status_code=404, detail="Clip not found")
+    transcript = str(clip.get("text") or "").strip()
+    if not transcript:
+        raise HTTPException(status_code=422, detail="This clip has no transcript")
+    from ...ai import generate_post_copy
+
+    try:
+        copy = await generate_post_copy(clip.get("hook_title"), transcript)
+    except Exception as exc:
+        logger.warning("Post copy failed: %s", exc)
+        raise HTTPException(status_code=502, detail="Could not write the description right now") from None
+    return {"description": copy.description, "hashtags": copy.hashtags}

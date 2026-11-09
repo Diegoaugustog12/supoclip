@@ -34,7 +34,7 @@ type Frame = { src: string; aspect: number; image: HTMLImageElement };
 type Drag = { index: number; mode: "move" | "resize"; startX: number; startY: number; crop: Crop };
 
 const PANEL_COLORS = ["#22c55e", "#3b82f6"];
-const PREVIEW_W = 200;
+const PREVIEW_W = 300;
 const CAPTION_ANIMATIONS = ["none", "karaoke", "pop", "fade", "bounce", "flicker", "glitch", "typewriter"] as const;
 const TITLE_ANIMATIONS = ["fade", "pop", "none"] as const;
 const SAMPLE_WORDS = ["this", "is", "how", "your", "captions", "will", "look", "here"];
@@ -341,7 +341,7 @@ export function LayoutEditor() {
         {frameError && <p role="alert" className="text-sm text-destructive">{frameError}</p>}
       </section>
 
-      {frame ? (
+      {frame || editingId ? (
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
           <section className="space-y-4">
             <div
@@ -352,8 +352,12 @@ export function LayoutEditor() {
               onPointerUp={stopDrag}
               onPointerCancel={stopDrag}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={frame.src} alt={t("frameAlt")} className="pointer-events-none size-full object-fill" draggable={false} />
+              {frame ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={frame.src} alt={t("frameAlt")} className="pointer-events-none size-full object-fill" draggable={false} />
+              ) : (
+                <p className="absolute inset-0 grid place-items-center p-4 text-center text-sm text-muted-foreground">{t("noFrame")}</p>
+              )}
               {crops.slice(0, count).map((crop, i) => (
                 <div
                   key={i}
@@ -513,7 +517,7 @@ export function LayoutEditor() {
             </fieldset>
           </section>
 
-          <aside className="space-y-3">
+          <aside className="space-y-3 lg:sticky lg:top-4 lg:self-start">
             <p className="text-sm font-medium">{t("outputPreview")}</p>
             <canvas ref={preview} width={PREVIEW_W} height={Math.round((PREVIEW_W * OUT_H) / OUT_W)} className="rounded-lg border bg-black" aria-label={t("outputPreview")} />
             <div className="space-y-2">

@@ -62,5 +62,7 @@
     "flicker": "Berkedip",
     "glitch": "Glitch",
     "typewriter": "Mesin tik"
-  }
+  },
+  "showWhole": "{panel}: tampilkan seluruh potongan (latar buram)",
+  "showWholeHint": "Menampilkan semua isi kotak, meski bentuknya tidak sama dengan panel. Ubah ukuran kotak dengan bebas."
 }

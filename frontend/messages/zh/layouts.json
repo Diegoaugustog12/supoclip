@@ -62,5 +62,7 @@
     "flicker": "闪烁",
     "glitch": "故障",
     "typewriter": "打字机"
-  }
+  },
+  "showWhole": "{panel}：显示完整裁剪区域（模糊背景）",
+  "showWholeHint": "显示方框内的全部内容，即使形状与面板不同。可自由调整方框大小。"
 }

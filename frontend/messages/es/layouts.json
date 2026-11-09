@@ -62,5 +62,7 @@
     "flicker": "Parpadeo",
     "glitch": "Glitch",
     "typewriter": "Máquina de escribir"
-  }
+  },
+  "showWhole": "{panel}: mostrar el recorte completo (fondo desenfocado)",
+  "showWholeHint": "Muestra todo lo que hay dentro de la caja, aunque no tenga la forma del panel. Cambia su tamaño libremente."
 }

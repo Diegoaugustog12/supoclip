@@ -12,6 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import {
   type CaptionStyle,
   type Crop,
+  type Fit,
   type LayoutSpec,
   type PanelCount,
   type TitleStyle,
@@ -24,6 +25,7 @@ import {
   panelHeights,
   panelRatio,
   resizeCrop,
+  resizeFree,
 } from "@/lib/layout-spec";
 
 type Saved = { id: string; name: string; spec: LayoutSpec };
@@ -58,6 +60,7 @@ export function LayoutEditor() {
   const [count, setCount] = useState<PanelCount>(2);
   const [firstShare, setFirstShare] = useState(0.35);
   const [crops, setCrops] = useState<Crop[]>([]);
+  const [fits, setFits] = useState<Fit[]>(["cover", "cover"]);
   const [captionY, setCaptionY] = useState<number | null>(null);
   const [caption, setCaption] = useState<CaptionStyle>({});
   const [title, setTitle] = useState<TitleStyle>({});
@@ -119,9 +122,9 @@ export function LayoutEditor() {
         { x: 0.68, y: 0.58, w: 0.3, h: 0 },
         { x: 0, y: 0, w: 1, h: 0 },
       ];
-      return [0, 1].map((i) => fitCrop(starts[i] ?? starts[0], panelRatio(heights[i] ?? heights[0]), aspect));
+      return [0, 1].map((i) => fitCrop(starts[i] ?? starts[0], panelRatio(heights[i] ?? heights[0]), aspect, fits[i]));
     });
-  }, [frame, heights, aspect]);
+  }, [frame, heights, aspect, fits]);
 
   // The 9:16 result, drawn from the same crops the render will use.
   useEffect(() => {
@@ -137,7 +140,23 @@ export function LayoutEditor() {
       const crop = crops[i];
       const h = ph * scale;
       const { naturalWidth: nw, naturalHeight: nh } = frame.image;
-      ctx.drawImage(frame.image, crop.x * nw, crop.y * nh, crop.w * nw, crop.h * nh, 0, y, PREVIEW_W, h);
+      const source = [crop.x * nw, crop.y * nh, crop.w * nw, crop.h * nh] as const;
+      if (fits[i] === "contain") {
+        // Blurred copy filling the panel, then the whole crop scaled to fit.
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, y, PREVIEW_W, h);
+        ctx.clip();
+        const cover = Math.max(PREVIEW_W / source[2], h / source[3]);
+        ctx.filter = "blur(6px)";
+        ctx.drawImage(frame.image, ...source, (PREVIEW_W - source[2] * cover) / 2, y + (h - source[3] * cover) / 2, source[2] * cover, source[3] * cover);
+        ctx.filter = "none";
+        const contain = Math.min(PREVIEW_W / source[2], h / source[3]);
+        ctx.drawImage(frame.image, ...source, (PREVIEW_W - source[2] * contain) / 2, y + (h - source[3] * contain) / 2, source[2] * contain, source[3] * contain);
+        ctx.restore();
+      } else {
+        ctx.drawImage(frame.image, ...source, 0, y, PREVIEW_W, h);
+      }
       y += h;
     });
     const lineY = (captionY ?? (count === 2 ? heights[0] / OUT_H : 0.8)) * canvas.height;
@@ -173,7 +192,7 @@ export function LayoutEditor() {
       const titlePx = ((title.size ?? 70) * PREVIEW_W) / OUT_W;
       drawText("Example headline", familyFor(title.font ?? caption.font), titlePx, (title.y ?? 0.09) * canvas.height, PREVIEW_W * 0.88);
     }
-  }, [frame, crops, heights, count, captionY, caption, title, templates, familyFor, fontsReady]);
+  }, [frame, crops, heights, count, captionY, caption, title, templates, familyFor, fontsReady, fits]);
 
   async function loadFrame() {
     setLoadingFrame(true);
@@ -218,8 +237,9 @@ export function LayoutEditor() {
     const dy = (event.clientY - active.startY) / box.height;
     setCrops((current) => current.map((crop, i) => {
       if (i !== active.index) return crop;
-      return active.mode === "move"
-        ? moveCrop(active.crop, dx, dy)
+      if (active.mode === "move") return moveCrop(active.crop, dx, dy);
+      return fits[i] === "contain"
+        ? resizeFree(active.crop, active.crop.w + dx, active.crop.h + dy)
         : resizeCrop(active.crop, active.crop.w + dx, panelRatio(heights[i]), aspect);
     }));
   }
@@ -227,7 +247,9 @@ export function LayoutEditor() {
   const stopDrag = () => { drag.current = null; };
 
   function swapPanels() {
-    setCrops((current) => [current[1], current[0]].map((crop, i) => fitCrop(crop, panelRatio(heights[i]), aspect)));
+    const swappedFits: Fit[] = [fits[1], fits[0]];
+    setFits(swappedFits);
+    setCrops((current) => [current[1], current[0]].map((crop, i) => fitCrop(crop, panelRatio(heights[i]), aspect, swappedFits[i])));
   }
 
   function loadLayout(item: Saved) {
@@ -235,6 +257,7 @@ export function LayoutEditor() {
     setCount(state.count);
     setFirstShare(state.firstShare);
     setCrops(state.crops);
+    setFits([state.fits[0] ?? "cover", state.fits[1] ?? "cover"]);
     setCaptionY(state.captionY);
     setCaption(state.caption);
     setTitle(state.title);
@@ -250,7 +273,7 @@ export function LayoutEditor() {
       const response = await fetch(updating ? `/api/layouts/${editingId}` : "/api/layouts", {
         method: updating ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), spec: buildSpec(count, firstShare, crops, captionY, caption, title) }),
+        body: JSON.stringify({ name: name.trim(), spec: buildSpec(count, firstShare, crops, captionY, caption, title, fits) }),
       });
       if (!response.ok) throw new Error(await errorText(response, t("saveError")));
       const body = await response.json();
@@ -348,6 +371,24 @@ export function LayoutEditor() {
                   <Button type="button" variant="outline" size="sm" onClick={swapPanels}><ArrowDownUp className="size-4" />{t("swap")}</Button>
                 </div>
               )}
+              <div className="space-y-2 sm:col-span-2">
+                {[0, 1].slice(0, count).map((i) => (
+                  <label key={i} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={fits[i] === "contain"}
+                      onChange={(e) => {
+                        const next: Fit = e.target.checked ? "contain" : "cover";
+                        setFits((current) => current.map((value, index) => (index === i ? next : value)));
+                        // Showing everything starts from the whole frame, which the user then trims.
+                        if (next === "contain") setCrops((current) => current.map((crop, index) => (index === i ? { x: 0, y: 0, w: 1, h: 1 } : crop)));
+                      }}
+                    />
+                    <span>{t("showWhole", { panel: labels[i] })}</span>
+                  </label>
+                ))}
+                <p className="text-xs text-muted-foreground">{t("showWholeHint")}</p>
+              </div>
               <div className="space-y-2 sm:col-span-2">
                 <div className="flex items-center justify-between">
                   <Label>{captionY === null ? t("captionAuto") : t("captionAt", { percent: Math.round(captionY * 100) })}</Label>

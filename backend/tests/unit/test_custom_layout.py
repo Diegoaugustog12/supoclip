@@ -80,3 +80,34 @@ def test_filtergraph_renders_a_1080x1920_clip(tmp_path, spec):
 def test_second_panel_height_may_be_omitted():
     spec = normalize_layout_spec({"panels": [{"crop": CAM, "height": 0.4}, {"crop": GAME}]})
     assert spec["panels"][1]["height"] == pytest.approx(0.6)
+
+
+def test_fit_defaults_to_cover_and_rejects_other_values():
+    spec = normalize_layout_spec(two(0.35))
+    assert [p["fit"] for p in spec["panels"]] == ["cover", "cover"]
+    bad = two(0.35)
+    bad["panels"][0]["fit"] = "stretch"
+    with pytest.raises(ValueError):
+        normalize_layout_spec(bad)
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg is required")
+def test_contain_panel_shows_the_whole_crop_over_a_blurred_background(tmp_path):
+    # A wide full-frame crop in a tall panel: cover would cut the sides, contain keeps them.
+    spec = two(0.35)
+    spec["panels"][1]["crop"] = {"x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0}
+    spec["panels"][1]["fit"] = "contain"
+    plan = build_custom_layout(1920, 1080, normalize_layout_spec(spec))
+    assert "gblur" in plan["video_filter"] and "decrease" in plan["video_filter"]
+    out = tmp_path / "out.mp4"
+    subprocess.run([
+        "ffmpeg", "-v", "error", "-y", "-f", "lavfi",
+        "-i", "testsrc2=size=1920x1080:rate=10:duration=1",
+        "-filter_complex", plan["video_filter"], "-map", "[vout]",
+        "-pix_fmt", "yuv420p", str(out),
+    ], check=True)
+    size = subprocess.run([
+        "ffprobe", "-v", "error", "-select_streams", "v", "-show_entries",
+        "stream=width,height", "-of", "csv=p=0", str(out),
+    ], check=True, capture_output=True, text=True).stdout.strip()
+    assert size == "1080,1920"

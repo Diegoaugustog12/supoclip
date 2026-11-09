@@ -62,5 +62,7 @@
     "flicker": "Flackern",
     "glitch": "Glitch",
     "typewriter": "Schreibmaschine"
-  }
+  },
+  "showWhole": "{panel}: ganzen Ausschnitt zeigen (unscharfer Hintergrund)",
+  "showWholeHint": "Zeigt alles in der Box, auch wenn die Form nicht zum Bereich passt. Die Box lässt sich frei skalieren."
 }

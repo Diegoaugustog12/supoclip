@@ -62,5 +62,7 @@
     "flicker": "Flicker",
     "glitch": "Glitch",
     "typewriter": "Typewriter"
-  }
+  },
+  "showWhole": "{panel}: show the whole crop (blurred background)",
+  "showWholeHint": "Shows everything inside the box, even if it is not the panel's shape. Resize the box freely."
 }

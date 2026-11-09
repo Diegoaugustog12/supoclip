@@ -10,6 +10,7 @@ import {
   panelHeights,
   panelRatio,
   resizeCrop,
+  resizeFree,
 } from "./layout-spec";
 
 const FRAME = 16 / 9;
@@ -101,5 +102,30 @@ describe("caption and title styles", () => {
     const state = fromSpec({ version: 1, panels: [{ crop: { x: 0, y: 0, w: 1, h: 1 }, height: 1 }], caption_y: null });
     expect(state.caption).toEqual({});
     expect(state.title).toEqual({});
+  });
+});
+
+describe("contain panels", () => {
+  it("keep a free-shaped crop inside the frame", () => {
+    const free = fitCrop({ x: 0.2, y: 0.1, w: 0.9, h: 0.95 }, panelRatio(1280), FRAME, "contain");
+    expect(free.x + free.w).toBeLessThanOrEqual(1.000001);
+    expect(free.y + free.h).toBeLessThanOrEqual(1.000001);
+    // not forced to the panel's shape
+    expect((free.w * FRAME) / free.h).not.toBeCloseTo(panelRatio(1280));
+  });
+
+  it("resize both sides and never below the minimum", () => {
+    const crop = resizeFree({ x: 0.1, y: 0.1, w: 0.3, h: 0.3 }, 0.6, 0.2);
+    expect(crop.w).toBeCloseTo(0.6);
+    expect(crop.h).toBeCloseTo(0.2);
+    expect(resizeFree(crop, 0, 0).w).toBeGreaterThanOrEqual(0.08);
+  });
+
+  it("the fit is saved per panel and read back", () => {
+    const full = { x: 0, y: 0, w: 1, h: 1 };
+    const spec = buildSpec(2, 0.35, [full, full], null, {}, {}, ["cover", "contain"]);
+    expect(spec.panels.map((panel) => panel.fit)).toEqual(["cover", "contain"]);
+    expect(fromSpec(spec).fits).toEqual(["cover", "contain"]);
+    expect(fromSpec({ ...spec, panels: spec.panels.map(({ crop, height }) => ({ crop, height })) }).fits).toEqual(["cover", "cover"]);
   });
 });

@@ -62,5 +62,7 @@
     "flicker": "Piscar",
     "glitch": "Glitch",
     "typewriter": "Máquina de escrever"
-  }
+  },
+  "showWhole": "{panel}: mostrar o recorte inteiro (fundo desfocado)",
+  "showWholeHint": "Mostra tudo que está dentro da caixa, mesmo fora do formato do painel. Redimensione a caixa livremente."
 }

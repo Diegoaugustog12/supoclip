@@ -9,9 +9,12 @@ A layout is a small JSON spec the user draws on the layout page::
 
 ``crop`` is a rectangle of the source frame as fractions of its width and
 height. ``height`` is the share of the 9:16 output the panel takes, top to
-bottom. Panels always fill the full output width. A crop whose shape differs from
-its panel is centre-cropped to fit, so the page draws crops in the panel's shape
-and the render shows exactly what was drawn.
+bottom. Panels always fill the full output width.
+
+``fit`` says how a crop fills its panel. ``cover`` (default) fills it and
+centre-cropping whatever overhangs, so the page draws those crops in the panel's
+shape. ``contain`` shows the whole crop at any shape, scaled to fit, over a
+blurred copy of itself, so a wide game is never cut at the sides.
 """
 
 import re
@@ -132,9 +135,13 @@ def normalize_layout_spec(raw: Any) -> Dict[str, Any]:
             share = 1.0 if len(panels_raw) == 1 else 0.0
         else:
             share = _number(item.get("height"), f"panel {index + 1} height")
+        fit = item.get("fit", "cover")
+        if fit not in ("cover", "contain"):
+            raise ValueError(f"panel {index + 1} fit must be cover or contain")
         panels.append({
             "crop": {"x": x, "y": y, "w": min(w, 1 - x), "h": min(h, 1 - y)},
             "height": share,
+            "fit": fit,
         })
     if len(panels) == 2:
         first = panels[0]["height"]
@@ -179,11 +186,24 @@ def build_custom_layout(width: int, height: int, spec: Dict[str, Any]) -> Dict[s
         cx = clamp_even(int(round(crop["x"] * width)), 0, max(0, width - cw))
         cy = clamp_even(int(round(crop["y"] * height)), 0, max(0, height - ch))
         source = f"[s{i}]" if n == 2 else "[0:v]"
-        graph.append(
-            f"{source}crop={cw}:{ch}:{cx}:{cy},"
-            f"scale={OUT_W}:{ph}:force_original_aspect_ratio=increase:flags=lanczos,"
-            f"crop={OUT_W}:{ph},{UPSCALE_SHARPEN_FILTER},setsar=1[p{i}]"
-        )
+        if panel.get("fit") == "contain":
+            # The whole crop, scaled to fit, over a blurred copy that fills the panel.
+            graph.append(f"{source}crop={cw}:{ch}:{cx}:{cy},split=2[b{i}][f{i}]")
+            graph.append(
+                f"[b{i}]scale={OUT_W}:{ph}:force_original_aspect_ratio=increase,"
+                f"crop={OUT_W}:{ph},gblur=sigma=24:steps=2,setsar=1[bb{i}]"
+            )
+            graph.append(
+                f"[f{i}]scale={OUT_W}:{ph}:force_original_aspect_ratio=decrease:flags=lanczos,"
+                f"{UPSCALE_SHARPEN_FILTER},setsar=1[ff{i}]"
+            )
+            graph.append(f"[bb{i}][ff{i}]overlay=(W-w)/2:(H-h)/2,setsar=1[p{i}]")
+        else:
+            graph.append(
+                f"{source}crop={cw}:{ch}:{cx}:{cy},"
+                f"scale={OUT_W}:{ph}:force_original_aspect_ratio=increase:flags=lanczos,"
+                f"crop={OUT_W}:{ph},{UPSCALE_SHARPEN_FILTER},setsar=1[p{i}]"
+            )
     graph.append(
         "[p0][p1]vstack=inputs=2[vout]" if n == 2 else "[p0]null[vout]"
     )

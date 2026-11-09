@@ -11,6 +11,8 @@ export const MIN_SHARE = 0.15;
 export const MIN_CROP_W = 0.08;
 
 export type Crop = { x: number; y: number; w: number; h: number };
+/** `cover` fills the panel (the crop is drawn in the panel's shape). `contain` shows the whole crop at any shape over a blurred copy. */
+export type Fit = "cover" | "contain";
 export type PanelCount = 1 | 2;
 /** Caption overrides. A missing key keeps the caption template's own value. */
 export type CaptionStyle = {
@@ -36,7 +38,7 @@ export type TitleStyle = {
 };
 export type LayoutSpec = {
   version: 1;
-  panels: { crop: Crop; height: number }[];
+  panels: { crop: Crop; height: number; fit?: Fit }[];
   caption_y: number | null;
   caption?: CaptionStyle;
   title?: TitleStyle;
@@ -67,8 +69,26 @@ function maxWidth(x: number, y: number, ratio: number, frameAspect: number): num
   return Math.min(1 - x, ((1 - y) * ratio) / frameAspect);
 }
 
+/** A free-shaped crop kept inside the frame (used by `contain` panels). */
+export function clampFree(crop: Crop): Crop {
+  const x = clamp(crop.x, 0, 1 - MIN_CROP_W);
+  const y = clamp(crop.y, 0, 1 - MIN_CROP_W);
+  return {
+    x,
+    y,
+    w: clamp(crop.w, MIN_CROP_W, 1 - x),
+    h: clamp(crop.h, MIN_CROP_W, 1 - y),
+  };
+}
+
+/** Resize a free-shaped crop from its bottom-right corner. */
+export function resizeFree(crop: Crop, w: number, h: number): Crop {
+  return clampFree({ ...crop, w, h });
+}
+
 /** The crop with its height re-derived for the panel's shape, shrunk if it no longer fits. */
-export function fitCrop(crop: Crop, ratio: number, frameAspect: number): Crop {
+export function fitCrop(crop: Crop, ratio: number, frameAspect: number, fit: Fit = "cover"): Crop {
+  if (fit === "contain") return clampFree(crop);
   const x = clamp(crop.x, 0, 1 - MIN_CROP_W);
   const y = clamp(crop.y, 0, 0.9);
   const w = clamp(crop.w, MIN_CROP_W, Math.max(MIN_CROP_W, maxWidth(x, y, ratio, frameAspect)));
@@ -107,11 +127,13 @@ export function buildSpec(
   captionY: number | null,
   caption: CaptionStyle = {},
   title: TitleStyle = {},
+  fits: Fit[] = [],
 ): LayoutSpec {
   const share = clamp(firstShare, MIN_SHARE, 1 - MIN_SHARE);
   const panels = crops.slice(0, count).map((crop, index) => ({
     crop: { x: crop.x, y: crop.y, w: crop.w, h: crop.h },
     height: count === 1 ? 1 : index === 0 ? share : 1 - share,
+    fit: fits[index] ?? "cover",
   }));
   return { version: 1, panels, caption_y: captionY, caption, title };
 }
@@ -124,6 +146,7 @@ export function fromSpec(spec: LayoutSpec): {
   captionY: number | null;
   caption: CaptionStyle;
   title: TitleStyle;
+  fits: Fit[];
 } {
   const count: PanelCount = spec.panels.length === 2 ? 2 : 1;
   return {
@@ -133,5 +156,6 @@ export function fromSpec(spec: LayoutSpec): {
     captionY: spec.caption_y ?? null,
     caption: { ...(spec.caption ?? {}) },
     title: { ...(spec.title ?? {}) },
+    fits: spec.panels.map((panel) => panel.fit ?? "cover"),
   };
 }

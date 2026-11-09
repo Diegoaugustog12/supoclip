@@ -41,7 +41,7 @@ const SAMPLE_WORDS = ["this", "is", "how", "your", "captions", "will", "look", "
 
 const WORD_SECONDS = 0.45;
 /** Sample caption drawn with the chosen animation at `elapsed` seconds of playback. */
-function drawAnimatedCaption(ctx: CanvasRenderingContext2D, elapsed: number, opts: { family: string; px: number; centreY: number; maxWidth: number; centreX: number; words: number; animation: string; uppercase: boolean }) {
+function drawAnimatedCaption(ctx: CanvasRenderingContext2D, elapsed: number, opts: { family: string; px: number; centreY: number; maxWidth: number; centreX: number; words: number; animation: string; uppercase: boolean; color: string; highlight: string; box?: string | null }) {
   const total = Math.floor(elapsed / WORD_SECONDS);
   const start = Math.floor(total / opts.words) * opts.words;
   const active = total - start;
@@ -67,8 +67,19 @@ function drawAnimatedCaption(ctx: CanvasRenderingContext2D, elapsed: number, opt
       let scale = 1;
       let dy = 0;
       let alpha = 1;
-      let color = "#fff";
-      if (opts.animation === "karaoke" && isActive) color = "#facc15";
+      let color = opts.color;
+      if (isActive && opts.animation !== "none") {
+        color = opts.highlight;
+        if (opts.box) {
+          ctx.save();
+          ctx.fillStyle = opts.box;
+          const pad = px * 0.18;
+          ctx.beginPath();
+          ctx.roundRect(x - pad, opts.centreY - px * 0.62, width + pad * 2, px * 1.24, px * 0.25);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
       if (isActive) {
         const k = Math.min(1, inWord / 0.3);
         if (opts.animation === "pop") scale = 1.7 - 0.7 * k;
@@ -98,7 +109,7 @@ function drawAnimatedCaption(ctx: CanvasRenderingContext2D, elapsed: number, opt
 }
 
 type FontInfo = { name: string; display_name: string; format?: string };
-type TemplateInfo = { id: string; name: string; font_family: string; font_size: number };
+type TemplateInfo = { id: string; name: string; font_family: string; font_size: number; animation?: string; font_color?: string; highlight_color?: string; uppercase?: boolean; word_box_color?: string | null };
 
 async function errorText(response: Response, fallback: string) {
   try {
@@ -247,7 +258,8 @@ export function LayoutEditor() {
     if (playing) {
       drawAnimatedCaption(ctx, Math.max(0, playing.currentTime - liveStart.current), {
         family: familyFor(caption.font), px: capPx, centreY: lineY, maxWidth: PREVIEW_W * (1 - 2 * margin), centreX: PREVIEW_W / 2,
-        words: caption.max_words ?? 4, animation: caption.animation ?? "karaoke", uppercase: caption.uppercase === true,
+        words: caption.max_words ?? 4, animation: caption.animation ?? template?.animation ?? "karaoke", uppercase: caption.uppercase ?? template?.uppercase ?? false,
+        color: template?.font_color ?? "#fff", highlight: template?.highlight_color ?? "#facc15", box: template?.word_box_color,
       });
     } else {
       drawText(caption.uppercase ? sample.toUpperCase() : sample, familyFor(caption.font), capPx, lineY, PREVIEW_W * (1 - 2 * margin));

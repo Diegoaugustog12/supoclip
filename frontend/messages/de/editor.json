@@ -121,7 +121,12 @@
     "center": "Person zentrieren",
     "landscapeHint": "Dieser Clip enthält breite Bilddetails. Eine Querformatversion zeigt sie gut lesbar, ohne Inhalte abzuschneiden.",
     "useLandscape": "Querformat verwenden",
-    "autoLayout": "Generiertes Layout"
+    "autoLayout": "Generiertes Layout",
+    "layoutTitle": "Layout",
+    "layoutBody": "Wie das 9:16-Bild aufgebaut wird. Eine Änderung erneuert nur das Bild: Schnitte, Untertitel und B-Roll bleiben.",
+    "layoutApply": "Layout anwenden",
+    "layoutWorking": "Wird neu erstellt…",
+    "layoutFailed": "Layout konnte nicht geändert werden"
   },
   "audioPanel": {
     "title": "Audio",

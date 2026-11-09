@@ -121,7 +121,12 @@
     "center": "Pusatkan subjek",
     "landscapeHint": "Klip ini berisi detail yang melebar. Versi lanskap menjaga detail tetap terbaca tanpa memotong konten.",
     "useLandscape": "Gunakan versi lanskap",
-    "autoLayout": "Tata letak hasil pembuatan"
+    "autoLayout": "Tata letak hasil pembuatan",
+    "layoutTitle": "Tata letak",
+    "layoutBody": "Cara bingkai 9:16 disusun. Mengubahnya hanya mengulang gambar: potongan, teks, dan B-roll tetap ada.",
+    "layoutApply": "Terapkan tata letak",
+    "layoutWorking": "Membuat ulang…",
+    "layoutFailed": "Tata letak tidak dapat diubah"
   },
   "audioPanel": {
     "title": "Audio",

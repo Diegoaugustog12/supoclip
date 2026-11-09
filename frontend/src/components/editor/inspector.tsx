@@ -50,6 +50,8 @@ import {
 import { cn } from "@/lib/utils";
 import { editorMessage, Field, Panel, Range, Section } from "./studio-ui";
 import { BRollPanel } from "./broll-panel";
+import { LayoutPicker } from "@/components/editor/layout-picker";
+
 export type InspectorTab = "captions" | "framing" | "broll" | "audio" | "effects";
 
 const TABS = [
@@ -638,6 +640,7 @@ export function Inspector({
             </Section>
           </TabsContent>
           <TabsContent value="framing" className="space-y-6 p-4">
+            <LayoutPicker endpoint={endpoint} layout={asset.layout} layoutId={asset.layoutId} />
             <Section
               title={t("framing.title")}
               description={t("framing.description")}

@@ -70,18 +70,18 @@ function drawAnimatedCaption(ctx: CanvasRenderingContext2D, elapsed: number, opt
       let color = "#fff";
       if (opts.animation === "karaoke" && isActive) color = "#facc15";
       if (isActive) {
-        const k = Math.min(1, inWord / 0.15);
-        if (opts.animation === "pop") scale = 1.35 - 0.35 * k;
-        if (opts.animation === "bounce") dy = -Math.sin(k * Math.PI) * px * 0.35;
+        const k = Math.min(1, inWord / 0.3);
+        if (opts.animation === "pop") scale = 1.7 - 0.7 * k;
+        if (opts.animation === "bounce") dy = -Math.sin(k * Math.PI) * px * 0.8;
         if (opts.animation === "fade") alpha = k;
-        if (opts.animation === "flicker") alpha = inWord < 0.3 && Math.floor(elapsed * 24) % 2 === 0 ? 0.25 : 1;
+        if (opts.animation === "flicker") alpha = inWord < 0.35 && Math.floor(elapsed * 20) % 2 === 0 ? 0.25 : 1;
       }
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.translate(x + width / 2, opts.centreY + dy);
       ctx.scale(scale, scale);
-      if (opts.animation === "glitch" && isActive && inWord < 0.3) {
-        const jitter = (Math.floor(elapsed * 30) % 3 - 1) * px * 0.08;
+      if (opts.animation === "glitch" && isActive && inWord < 0.35) {
+        const jitter = (Math.floor(elapsed * 30) % 3 - 1) * px * 0.18;
         ctx.fillStyle = "#f43f5e";
         ctx.fillText(word, -width / 2 + jitter, 0);
         ctx.fillStyle = "#22d3ee";

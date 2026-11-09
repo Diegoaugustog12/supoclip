@@ -50,13 +50,22 @@ def _activity(analysis: Dict[str, Any], face: Face, t: float) -> float:
     return float(region.mean()) if region.size else 0.0
 
 
+BODY_DROP_FACES = 1.4
+
+
 def track_centres(
-    analysis: Dict[str, Any], mode: str, start: Tuple[float, float], max_jump: float
+    analysis: Dict[str, Any], mode: str, start: Tuple[float, float], max_jump: float, max_drop: float
 ) -> List[Tuple[float, float, float]]:
-    """(time, centre x, centre y) keyframes for one panel."""
+    """(time, centre x, centre y) keyframes for one panel.
+
+    The crop is centred on the person's body, not the face: the centre sits
+    below the face by ``BODY_DROP_FACES`` face heights (limited to ``max_drop``),
+    so the face stays in the upper part and the shoulders and torso are shown.
+    """
     samples = analysis["face_samples"]
     keys: List[Tuple[float, float, float]] = []
     anchor = start
+    drop = 0.0
     held_since = -1e9
     last_key = -1e9
     for t, faces in samples:
@@ -74,12 +83,14 @@ def track_centres(
                     target = best
                     held_since = t
             cx, cy = _centre(target)
+            new_drop = min(max_drop, target[3] * BODY_DROP_FACES)
             # A face far from the last position is another person, not movement.
             if mode == "face" and abs(cx - anchor[0]) > max_jump:
                 cx, cy = anchor
             anchor = (cx, cy)
+            drop = new_drop
         if t - last_key >= KEY_EVERY_SECONDS or not keys:
-            keys.append((t, anchor[0], anchor[1]))
+            keys.append((t, anchor[0], anchor[1] + drop))
             last_key = t
     return keys
 
@@ -117,8 +128,9 @@ def plan_follow(input_path: Path, width: int, height: int, spec: Dict[str, Any])
         cw = clamp_even(int(round(crop["w"] * width)), 2, round_to_even(width))
         ch = clamp_even(int(round(crop["h"] * height)), 2, round_to_even(height))
         start = ((crop["x"] + crop["w"] / 2) * width, (crop["y"] + crop["h"] / 2) * height)
+        # Start the match from the face, which sits above the crop centre.
         mode = panel["follow"]
-        keys = track_centres(analysis, mode, start, width * MAX_JUMP_FRACTION)
+        keys = track_centres(analysis, mode, start, width * MAX_JUMP_FRACTION, ch * 0.25)
         if len(keys) < 2:
             continue
         max_x, max_y = max(0, width - cw), max(0, height - ch)

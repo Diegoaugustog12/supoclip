@@ -73,5 +73,6 @@
   "fileError": "Your browser could not read this video. Try an MP4 (H.264).",
   "playClip": "Play 5 seconds",
   "playing": "Playing…",
-  "playNeedsFile": "Playback works with a video file from your computer. Choose “File” above and load it."
+  "playNeedsFile": "Playback works with a video file from your computer. Choose “File” above and load it.",
+  "unsaved": "Unsaved changes — press Update"
 }

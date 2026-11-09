@@ -1615,6 +1615,17 @@ def _validate_segments(
                 )
                 segment.text = grounded_text
 
+            # The model sometimes omits the breakdown, leaving the all-zero default.
+            # Derive an estimate from its relevance so clips can still be ranked.
+            if segment.virality and segment.virality.total_score == 0 and not any([
+                segment.virality.hook_score, segment.virality.engagement_score,
+                segment.virality.value_score, segment.virality.shareability_score,
+            ]) and segment.relevance_score > 0:
+                part = max(0, min(25, round(float(segment.relevance_score) * 25)))
+                segment.virality.hook_score = part
+                segment.virality.engagement_score = part
+                segment.virality.value_score = part
+                segment.virality.shareability_score = part
             # Validate virality scores
             if segment.virality:
                 # Ensure total score is sum of subscores

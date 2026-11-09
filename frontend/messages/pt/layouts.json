@@ -73,5 +73,6 @@
   "fileError": "Seu navegador não conseguiu ler este vídeo. Tente um MP4 (H.264).",
   "playClip": "Reproduzir 5 segundos",
   "playing": "Reproduzindo…",
-  "playNeedsFile": "O player funciona com um arquivo de vídeo do seu computador. Escolha “Arquivo” acima e carregue o vídeo."
+  "playNeedsFile": "O player funciona com um arquivo de vídeo do seu computador. Escolha “Arquivo” acima e carregue o vídeo.",
+  "unsaved": "Alterações não salvas — clique em Atualizar"
 }

@@ -142,6 +142,7 @@ export function LayoutEditor() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saved, setSaved] = useState<Saved[]>([]);
   const [saving, setSaving] = useState(false);
+  const [savedSnapshot, setSavedSnapshot] = useState("");
   const stage = useRef<HTMLDivElement>(null);
   const preview = useRef<HTMLCanvasElement>(null);
   const drag = useRef<Drag | null>(null);
@@ -422,6 +423,7 @@ export function LayoutEditor() {
     setTitle(state.title);
     setName(item.name);
     setEditingId(item.id);
+    setSavedSnapshot(JSON.stringify(buildSpec(state.count, state.firstShare, state.crops, state.captionY, state.caption, state.title, state.fits)));
   }
 
   async function save(asNew: boolean) {
@@ -437,6 +439,7 @@ export function LayoutEditor() {
       if (!response.ok) throw new Error(await errorText(response, t("saveError")));
       const body = await response.json();
       setEditingId(body.layout?.id ?? null);
+      setSavedSnapshot(JSON.stringify(buildSpec(count, firstShare, crops, captionY, caption, title, fits)));
       toast.success(t("saved"));
       await loadSaved();
     } catch (error) {
@@ -566,13 +569,11 @@ export function LayoutEditor() {
               <div className="space-y-2 sm:col-span-2">
                 <div className="flex items-center justify-between">
                   <Label>{captionY === null ? t("captionAuto") : t("captionAt", { percent: Math.round(captionY * 100) })}</Label>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setCaptionY(captionY === null ? 0.5 : null)}>
-                    {captionY === null ? t("captionCustom") : t("captionReset")}
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setCaptionY(null)} disabled={captionY === null}>
+                    {t("captionReset")}
                   </Button>
                 </div>
-                {captionY !== null && (
-                  <Slider value={[captionY * 100]} min={10} max={90} step={1} onValueChange={(v) => setCaptionY(v[0] / 100)} aria-label={t("captionLabel")} />
-                )}
+                <Slider value={[(captionY ?? (count === 2 ? heights[0] / OUT_H : 0.8)) * 100]} min={10} max={90} step={1} onValueChange={(v) => setCaptionY(v[0] / 100)} aria-label={t("captionLabel")} />
               </div>
             </div>
 
@@ -669,6 +670,7 @@ export function LayoutEditor() {
               <Label htmlFor="layout-name">{t("nameLabel")}</Label>
               <Input id="layout-name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} />
               <div className="flex flex-wrap gap-2">
+                {editingId && JSON.stringify(buildSpec(count, firstShare, crops, captionY, caption, title, fits)) !== savedSnapshot && <p className="w-full text-xs font-medium text-amber-600">{t("unsaved")}</p>}
                 <Button size="sm" disabled={!name.trim() || saving} onClick={() => void save(false)}>{editingId ? t("update") : t("save")}</Button>
                 {editingId && <Button size="sm" variant="outline" disabled={!name.trim() || saving} onClick={() => void save(true)}>{t("saveAsNew")}</Button>}
               </div>

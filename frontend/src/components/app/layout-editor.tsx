@@ -14,6 +14,7 @@ import {
   type CaptionStyle,
   type Crop,
   type Fit,
+  type Follow,
   type LayoutSpec,
   type PanelCount,
   type TitleStyle,
@@ -133,6 +134,7 @@ export function LayoutEditor() {
   const [firstShare, setFirstShare] = useState(0.35);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [fits, setFits] = useState<Fit[]>(["cover", "cover"]);
+  const [follows, setFollows] = useState<Follow[]>(["none", "none"]);
   const [captionY, setCaptionY] = useState<number | null>(null);
   const [caption, setCaption] = useState<CaptionStyle>({});
   const [title, setTitle] = useState<TitleStyle>({});
@@ -418,12 +420,13 @@ export function LayoutEditor() {
     setFirstShare(state.firstShare);
     setCrops(state.crops);
     setFits([state.fits[0] ?? "cover", state.fits[1] ?? "cover"]);
+    setFollows([state.follows[0] ?? "none", state.follows[1] ?? "none"]);
     setCaptionY(state.captionY);
     setCaption(state.caption);
     setTitle(state.title);
     setName(item.name);
     setEditingId(item.id);
-    setSavedSnapshot(JSON.stringify(buildSpec(state.count, state.firstShare, state.crops, state.captionY, state.caption, state.title, state.fits)));
+    setSavedSnapshot(JSON.stringify(buildSpec(state.count, state.firstShare, state.crops, state.captionY, state.caption, state.title, state.fits, state.follows)));
   }
 
   async function save(asNew: boolean) {
@@ -434,12 +437,12 @@ export function LayoutEditor() {
       const response = await fetch(updating ? `/api/layouts/${editingId}` : "/api/layouts", {
         method: updating ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), spec: buildSpec(count, firstShare, crops, captionY, caption, title, fits) }),
+        body: JSON.stringify({ name: name.trim(), spec: buildSpec(count, firstShare, crops, captionY, caption, title, fits, follows) }),
       });
       if (!response.ok) throw new Error(await errorText(response, t("saveError")));
       const body = await response.json();
       setEditingId(body.layout?.id ?? null);
-      setSavedSnapshot(JSON.stringify(buildSpec(count, firstShare, crops, captionY, caption, title, fits)));
+      setSavedSnapshot(JSON.stringify(buildSpec(count, firstShare, crops, captionY, caption, title, fits, follows)));
       toast.success(t("saved"));
       await loadSaved();
     } catch (error) {
@@ -564,6 +567,17 @@ export function LayoutEditor() {
                     <span>{t("showWhole", { panel: labels[i] })}</span>
                   </label>
                 ))}
+                {[0, 1].slice(0, count).map((i) => (
+                  <label key={`follow-${i}`} className="flex items-center justify-between gap-2 text-sm">
+                    <span>{t("followLabel", { panel: labels[i] })}</span>
+                    <select className="h-9 rounded-md border bg-background px-2" value={follows[i]} onChange={(e) => setFollows((current) => current.map((value, k) => (k === i ? (e.target.value as Follow) : value)))}>
+                      <option value="none">{t("followNone")}</option>
+                      <option value="face">{t("followFace")}</option>
+                      <option value="speaker">{t("followSpeaker")}</option>
+                    </select>
+                  </label>
+                ))}
+                <p className="text-xs text-muted-foreground">{t("followHint")}</p>
                 <p className="text-xs text-muted-foreground">{t("showWholeHint")}</p>
               </div>
               <div className="space-y-2 sm:col-span-2">
@@ -670,7 +684,7 @@ export function LayoutEditor() {
               <Label htmlFor="layout-name">{t("nameLabel")}</Label>
               <Input id="layout-name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} />
               <div className="flex flex-wrap gap-2">
-                {editingId && JSON.stringify(buildSpec(count, firstShare, crops, captionY, caption, title, fits)) !== savedSnapshot && <p className="w-full text-xs font-medium text-amber-600">{t("unsaved")}</p>}
+                {editingId && JSON.stringify(buildSpec(count, firstShare, crops, captionY, caption, title, fits, follows)) !== savedSnapshot && <p className="w-full text-xs font-medium text-amber-600">{t("unsaved")}</p>}
                 <Button size="sm" disabled={!name.trim() || saving} onClick={() => void save(false)}>{editingId ? t("update") : t("save")}</Button>
                 {editingId && <Button size="sm" variant="outline" disabled={!name.trim() || saving} onClick={() => void save(true)}>{t("saveAsNew")}</Button>}
               </div>

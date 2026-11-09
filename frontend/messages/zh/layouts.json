@@ -74,5 +74,10 @@
   "playClip": "播放 5 秒",
   "playing": "播放中…",
   "playNeedsFile": "播放功能需要使用你电脑上的视频文件。请在上方选择“文件”并加载。",
-  "unsaved": "有未保存的更改 — 请点击更新"
+  "unsaved": "有未保存的更改 — 请点击更新",
+  "followLabel": "{panel}：裁剪跟随",
+  "followNone": "固定",
+  "followFace": "某个人脸",
+  "followSpeaker": "正在说话的人",
+  "followHint": "裁剪框是起始位置。“某个人脸”会让最近的人脸保持居中；“正在说话的人”会切到说话者。效果在最终视频中显示，静态预览中不显示。"
 }

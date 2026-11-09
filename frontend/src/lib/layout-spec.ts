@@ -14,6 +14,8 @@ export type Crop = { x: number; y: number; w: number; h: number };
 /** `cover` fills the panel (the crop is drawn in the panel's shape). `contain` shows the whole crop at any shape over a blurred copy. */
 export type Fit = "cover" | "contain";
 export type PanelCount = 1 | 2;
+/** `face` keeps the crop on a face; `speaker` jumps to whoever is talking. */
+export type Follow = "none" | "face" | "speaker";
 /** Caption overrides. A missing key keeps the caption template's own value. */
 export type CaptionStyle = {
   template?: string;
@@ -38,7 +40,7 @@ export type TitleStyle = {
 };
 export type LayoutSpec = {
   version: 1;
-  panels: { crop: Crop; height: number; fit?: Fit }[];
+  panels: { crop: Crop; height: number; fit?: Fit; follow?: Follow }[];
   caption_y: number | null;
   caption?: CaptionStyle;
   title?: TitleStyle;
@@ -128,12 +130,14 @@ export function buildSpec(
   caption: CaptionStyle = {},
   title: TitleStyle = {},
   fits: Fit[] = [],
+  follows: Follow[] = [],
 ): LayoutSpec {
   const share = clamp(firstShare, MIN_SHARE, 1 - MIN_SHARE);
   const panels = crops.slice(0, count).map((crop, index) => ({
     crop: { x: crop.x, y: crop.y, w: crop.w, h: crop.h },
     height: count === 1 ? 1 : index === 0 ? share : 1 - share,
     fit: fits[index] ?? "cover",
+    follow: follows[index] ?? "none",
   }));
   return { version: 1, panels, caption_y: captionY, caption, title };
 }
@@ -147,6 +151,7 @@ export function fromSpec(spec: LayoutSpec): {
   caption: CaptionStyle;
   title: TitleStyle;
   fits: Fit[];
+  follows: Follow[];
 } {
   const count: PanelCount = spec.panels.length === 2 ? 2 : 1;
   return {
@@ -157,5 +162,6 @@ export function fromSpec(spec: LayoutSpec): {
     caption: { ...(spec.caption ?? {}) },
     title: { ...(spec.title ?? {}) },
     fits: spec.panels.map((panel) => panel.fit ?? "cover"),
+    follows: spec.panels.map((panel) => panel.follow ?? "none"),
   };
 }

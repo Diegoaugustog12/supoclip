@@ -74,5 +74,10 @@
   "playClip": "Play 5 seconds",
   "playing": "Playing…",
   "playNeedsFile": "Playback works with a video file from your computer. Choose “File” above and load it.",
-  "unsaved": "Unsaved changes — press Update"
+  "unsaved": "Unsaved changes — press Update",
+  "followLabel": "{panel}: crop follows",
+  "followNone": "Fixed",
+  "followFace": "A face",
+  "followSpeaker": "Who is speaking",
+  "followHint": "The crop box is where it starts. “A face” keeps the closest face centred; “Who is speaking” jumps to the person talking. Shown in the final video, not in this still preview."
 }

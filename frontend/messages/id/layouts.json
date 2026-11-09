@@ -74,5 +74,10 @@
   "playClip": "Putar 5 detik",
   "playing": "Memutar…",
   "playNeedsFile": "Pemutaran berfungsi dengan file video dari komputer Anda. Pilih “File” di atas dan muat videonya.",
-  "unsaved": "Perubahan belum disimpan — tekan Perbarui"
+  "unsaved": "Perubahan belum disimpan — tekan Perbarui",
+  "followLabel": "{panel}: potongan mengikuti",
+  "followNone": "Tetap",
+  "followFace": "Satu wajah",
+  "followSpeaker": "Yang berbicara",
+  "followHint": "Kotak potong adalah titik awal. “Satu wajah” menjaga wajah terdekat di tengah; “Yang berbicara” berpindah ke orang yang bicara. Terlihat di video akhir, bukan di pratinjau diam ini."
 }

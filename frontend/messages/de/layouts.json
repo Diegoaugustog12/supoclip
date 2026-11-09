@@ -74,5 +74,10 @@
   "playClip": "5 Sekunden abspielen",
   "playing": "Wird abgespielt…",
   "playNeedsFile": "Die Wiedergabe funktioniert mit einer Videodatei von deinem Computer. Wähle oben „Datei“ und lade sie.",
-  "unsaved": "Nicht gespeichert — auf Aktualisieren klicken"
+  "unsaved": "Nicht gespeichert — auf Aktualisieren klicken",
+  "followLabel": "{panel}: Ausschnitt folgt",
+  "followNone": "Fest",
+  "followFace": "Einem Gesicht",
+  "followSpeaker": "Dem Sprecher",
+  "followHint": "Der Rahmen ist der Startpunkt. „Einem Gesicht“ hält das nächste Gesicht mittig; „Dem Sprecher“ springt zur sprechenden Person. Sichtbar im fertigen Video, nicht in dieser Standbild-Vorschau."
 }

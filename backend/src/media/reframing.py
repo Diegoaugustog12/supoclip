@@ -1495,7 +1495,10 @@ def describe_vertical_layout(
     if current_layout() == "custom" and current_layout_spec():
         from .custom_layout import build_custom_layout
 
-        custom = build_custom_layout(width, height, current_layout_spec())
+        spec = current_layout_spec()
+        from .custom_follow import plan_follow
+
+        custom = build_custom_layout(width, height, spec, plan_follow(input_path, width, height, spec))
         logger.info("Custom layout: panels %s", custom["heights"])
         return _described("custom", custom["video_filter"], "complex", custom["caption_y"])
 

@@ -74,5 +74,10 @@
   "playClip": "Reproduzir 5 segundos",
   "playing": "Reproduzindo…",
   "playNeedsFile": "O player funciona com um arquivo de vídeo do seu computador. Escolha “Arquivo” acima e carregue o vídeo.",
-  "unsaved": "Alterações não salvas — clique em Atualizar"
+  "unsaved": "Alterações não salvas — clique em Atualizar",
+  "followLabel": "{panel}: o corte acompanha",
+  "followNone": "Fixo",
+  "followFace": "Um rosto",
+  "followSpeaker": "Quem está falando",
+  "followHint": "A caixa de corte é o ponto de partida. “Um rosto” mantém o rosto mais próximo centralizado; “Quem está falando” pula para a pessoa que fala. Aparece no vídeo final, não neste preview parado."
 }

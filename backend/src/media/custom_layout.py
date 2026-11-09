@@ -138,10 +138,14 @@ def normalize_layout_spec(raw: Any) -> Dict[str, Any]:
         fit = item.get("fit", "cover")
         if fit not in ("cover", "contain"):
             raise ValueError(f"panel {index + 1} fit must be cover or contain")
+        follow = item.get("follow", "none")
+        if follow not in ("none", "face", "speaker"):
+            raise ValueError(f"panel {index + 1} follow must be none, face or speaker")
         panels.append({
             "crop": {"x": x, "y": y, "w": min(w, 1 - x), "h": min(h, 1 - y)},
             "height": share,
             "fit": fit,
+            "follow": follow,
         })
     if len(panels) == 2:
         first = panels[0]["height"]
@@ -171,8 +175,13 @@ def panel_heights(spec: Dict[str, Any]) -> List[int]:
     return [first, OUT_H - first]
 
 
-def build_custom_layout(width: int, height: int, spec: Dict[str, Any]) -> Dict[str, Any]:
-    """The ffmpeg filter graph (``[vout]``) for a normalized spec."""
+def build_custom_layout(
+    width: int, height: int, spec: Dict[str, Any], follow: Optional[Dict[int, Dict[str, str]]] = None
+) -> Dict[str, Any]:
+    """The ffmpeg filter graph (``[vout]``) for a normalized spec.
+
+    ``follow`` maps a panel index to crop x/y expressions (``custom_follow``).
+    """
     heights = panel_heights(spec)
     panels = spec["panels"]
     n = len(panels)
@@ -186,9 +195,11 @@ def build_custom_layout(width: int, height: int, spec: Dict[str, Any]) -> Dict[s
         cx = clamp_even(int(round(crop["x"] * width)), 0, max(0, width - cw))
         cy = clamp_even(int(round(crop["y"] * height)), 0, max(0, height - ch))
         source = f"[s{i}]" if n == 2 else "[0:v]"
+        moving = (follow or {}).get(i)
+        position = f"x='{moving['x']}':y='{moving['y']}'" if moving else f"{cx}:{cy}"
         if panel.get("fit") == "contain":
             # The whole crop, scaled to fit, over a blurred copy that fills the panel.
-            graph.append(f"{source}crop={cw}:{ch}:{cx}:{cy},split=2[b{i}][f{i}]")
+            graph.append(f"{source}crop={cw}:{ch}:{position},split=2[b{i}][f{i}]")
             graph.append(
                 f"[b{i}]scale={OUT_W}:{ph}:force_original_aspect_ratio=increase,"
                 f"crop={OUT_W}:{ph},gblur=sigma=24:steps=2,setsar=1[bb{i}]"
@@ -200,7 +211,7 @@ def build_custom_layout(width: int, height: int, spec: Dict[str, Any]) -> Dict[s
             graph.append(f"[bb{i}][ff{i}]overlay=(W-w)/2:(H-h)/2,setsar=1[p{i}]")
         else:
             graph.append(
-                f"{source}crop={cw}:{ch}:{cx}:{cy},"
+                f"{source}crop={cw}:{ch}:{position},"
                 f"scale={OUT_W}:{ph}:force_original_aspect_ratio=increase:flags=lanczos,"
                 f"crop={OUT_W}:{ph},{UPSCALE_SHARPEN_FILTER},setsar=1[p{i}]"
             )

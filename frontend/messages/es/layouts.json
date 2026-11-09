@@ -74,5 +74,10 @@
   "playClip": "Reproducir 5 segundos",
   "playing": "Reproduciendo…",
   "playNeedsFile": "La reproducción funciona con un archivo de vídeo de tu equipo. Elige “Archivo” arriba y cárgalo.",
-  "unsaved": "Cambios sin guardar — pulsa Actualizar"
+  "unsaved": "Cambios sin guardar — pulsa Actualizar",
+  "followLabel": "{panel}: el recorte sigue",
+  "followNone": "Fijo",
+  "followFace": "Un rostro",
+  "followSpeaker": "Quién habla",
+  "followHint": "El recuadro es el punto de partida. «Un rostro» mantiene centrado el rostro más cercano; «Quién habla» salta a la persona que habla. Se ve en el vídeo final, no en esta vista fija."
 }

@@ -67,6 +67,14 @@ def _stream_url(url: str) -> tuple:
             info = ydl.extract_info(url, download=False)
     except Exception as exc:
         logger.warning("Preview stream lookup failed: %s", exc)
+        text = str(exc).lower()
+        if "sign in" in text or "age" in text and "confirm" in text:
+            raise PreviewError(
+                "YouTube requires a login to open this video (age-restricted). "
+                "Download it and use the File option instead."
+            ) from None
+        if "private" in text or "unavailable" in text:
+            raise PreviewError("This video is private or unavailable") from None
         raise PreviewError("Could not open this YouTube video") from None
     stream = info.get("url") or next(
         (f.get("url") for f in reversed(info.get("requested_formats") or []) if f.get("url")), None

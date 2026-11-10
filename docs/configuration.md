@@ -137,10 +137,10 @@ These settings affect clip generation speed, throughput, and defaults.
 | `ASSEMBLY_AI_REQUEST_TIMEOUT_SECONDS` | `60` | Per-request upload/submit timeout (5–300). Transient upload failures retry up to 3 times; the paid submission is attempted once |
 | `WHISPER_MODEL_SIZE` | `medium` in `.env.example` | Whisper model size when Whisper is used locally |
 | `QUEUED_TASK_TIMEOUT_SECONDS` | `180` | Marks stale queued tasks as failed instead of leaving them stuck forever |
-| `MAX_VIDEO_DURATION` | `5400` | Maximum accepted upload length and baseline YouTube length in seconds |
+| `MAX_VIDEO_DURATION` | `21600` | Maximum accepted upload length and baseline YouTube length in seconds |
 | `MAX_VIDEO_UPLOAD_BYTES` | `4000000000` | Maximum uploaded file size, in bytes (4 GB). Checked in the browser before the upload starts, and again by the API and presigned upload session so it cannot be bypassed. Set `NEXT_PUBLIC_MAX_VIDEO_UPLOAD_BYTES` to the same value so the pre-upload check matches before the billing summary loads. Sources above 1080p or 60 fps are scaled down to that ceiling before transcription and rendering; plans with a lower output resolution still receive that lower resolution |
-| `PRO_YOUTUBE_MAX_VIDEO_DURATION` | `5400` | Maximum YouTube length for active or trialing Pro subscriptions, in seconds |
-| `SCALE_YOUTUBE_MAX_VIDEO_DURATION` | `10800` | Maximum YouTube length for active or trialing Creator (`scale`) subscriptions, in seconds |
+| `PRO_YOUTUBE_MAX_VIDEO_DURATION` | `21600` | Maximum YouTube length for active or trialing Pro subscriptions, in seconds |
+| `SCALE_YOUTUBE_MAX_VIDEO_DURATION` | `21600` | Maximum YouTube length for active or trialing Creator (`scale`) subscriptions, in seconds |
 | `MAX_CLIPS` | `10` | Hard cap on clips per task in every processing mode |
 | `CLIP_DURATION` | `30` | Default clip duration target in seconds |
 
@@ -200,6 +200,7 @@ These determine whether the app behaves like an open self-hosted product or a mo
 | Variable | Default | Purpose |
 |---|---|---|
 | `SELF_HOST` | `true` | When `true`, monetization is disabled |
+| `REQUIRE_LOGIN` | `false` in docker-compose | When `false`, nobody signs in: every visitor uses the instance's single account (the oldest one). Set `true` before exposing the app |
 | `BACKEND_AUTH_SECRET` | unset in practice | Shared secret for trusted frontend-to-backend requests in hosted mode |
 | `AUTH_SIGNATURE_TTL_SECONDS` | `300` | Lifetime of backend request signatures |
 | `PRO_PLAN_MINUTE_LIMIT` | `600` | Hosted-mode Pro allowance, in minutes of source video per month (`0` = unlimited) |

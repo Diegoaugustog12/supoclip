@@ -98,16 +98,16 @@ class Config:
             os.getenv("APIFY_LONG_VIDEO_SECONDS", "1800")
         )
 
-        self.max_video_duration = int(os.getenv("MAX_VIDEO_DURATION", "5400"))
+        self.max_video_duration = int(os.getenv("MAX_VIDEO_DURATION", "21600"))
         # YouTube sources can be longer on paid tiers. Uploads continue to use
         # max_video_duration regardless of plan.
         self.pro_youtube_max_video_duration = int(
             os.getenv("PRO_YOUTUBE_MAX_VIDEO_DURATION", str(self.max_video_duration))
         )
         self.scale_youtube_max_video_duration = int(
-            os.getenv("SCALE_YOUTUBE_MAX_VIDEO_DURATION", "10800")
+            os.getenv("SCALE_YOUTUBE_MAX_VIDEO_DURATION", "21600")
         )
-        # 4 GB fits a full-length upload (the duration cap is 90 minutes) at a
+        # 4 GB fits a full-length upload (the duration cap is 6 hours) at a
         # normal 1080p bitrate. Larger files make transcription, storage, and
         # rendering slow and fragile.
         self.max_video_upload_bytes = int(

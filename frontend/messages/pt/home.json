@@ -50,6 +50,8 @@
   "livePreview": "Prévia ao vivo",
   "framing": "Enquadramento",
   "layoutTitle": "Layout do 9:16 automático",
+  "myLayouts": "Meus layouts",
+  "createLayout": "Desenhar um layout novo",
   "layoutOptions": {
     "auto": { "label": "Automático", "hint": "Escolhe o melhor layout por cena" },
     "reaction_top": { "label": "Webcam em cima", "hint": "Webcam em cima, jogo ou vídeo embaixo" },

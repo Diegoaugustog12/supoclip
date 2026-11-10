@@ -290,5 +290,14 @@
     "working": "Untertitele {done} von {total}…",
     "done": "{count, plural, one {# Clip untertitelt} other {# Clips untertitelt}}",
     "failed": "{count, plural, one {# Clip konnte nicht untertitelt werden} other {# Clips konnten nicht untertitelt werden}}"
+  },
+  "postCopy": {
+    "heading": "Beschreibung & Hashtags zum Posten",
+    "generate": "Erstellen",
+    "again": "Neu erstellen",
+    "error": "Gerade nicht möglich. Bitte erneut versuchen.",
+    "copyText": "Text kopieren",
+    "copyTags": "Hashtags kopieren",
+    "copyAll": "Alles kopieren"
   }
 }

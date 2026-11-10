@@ -290,5 +290,14 @@
     "working": "Captioning {done} of {total}…",
     "done": "{count, plural, one {# clip got captions} other {# clips got captions}}",
     "failed": "{count, plural, one {# clip could not be captioned} other {# clips could not be captioned}}"
+  },
+  "postCopy": {
+    "heading": "Post description & hashtags",
+    "generate": "Write for me",
+    "again": "Write again",
+    "error": "Could not write it right now. Try again.",
+    "copyText": "Copy text",
+    "copyTags": "Copy hashtags",
+    "copyAll": "Copy all"
   }
 }

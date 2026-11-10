@@ -608,6 +608,22 @@ class RankedCandidate(BaseModel):
         default="",
         description="One short sentence on why it ranks here versus the others",
     )
+    hook_score: Optional[int] = Field(
+        default=None, ge=0, le=25,
+        description="Hook strength of the opening seconds, 0-25, compared with the other candidates",
+    )
+    engagement_score: Optional[int] = Field(
+        default=None, ge=0, le=25,
+        description="How engaging or entertaining the clip is, 0-25",
+    )
+    value_score: Optional[int] = Field(
+        default=None, ge=0, le=25,
+        description="Payoff and value delivered (lesson, punchline, story beat), 0-25",
+    )
+    shareability_score: Optional[int] = Field(
+        default=None, ge=0, le=25,
+        description="How likely someone is to send or save it, 0-25",
+    )
 
 
 class CandidateRanking(BaseModel):
@@ -634,6 +650,7 @@ Rules:
 - Rank a candidate last when its speech says the picture is interrupted, unavailable or broken (a technical problem, "these images cannot be shown"); it plays over a slate, not footage.
 - Rank every candidate exactly once, using the given candidate_id values.
 - Scores are comparative: spread them out so better clips clearly score higher. The best candidate should usually land between 80 and 95; weak, contextless, or filler candidates belong below 50.
+- For every candidate also give hook_score, engagement_score, value_score and shareability_score (each 0-25, comparative and different from one candidate to the next, never all equal). Their sum should be close to the candidate's score.
 - Return valid JSON only, with a "ranking" list ordered from best to worst."""
 
 _rerank_agent: Optional[Agent[None, CandidateRanking]] = None
@@ -1361,6 +1378,16 @@ def _rescale_virality(virality: ViralityAnalysis, new_total: int) -> None:
     virality.total_score = sum(rounded)
 
 
+def ensure_virality_estimate(segment: TranscriptSegment) -> None:
+    """Give a segment whose score breakdown is all zero an estimate from its relevance."""
+    virality = segment.virality
+    if virality is None or virality.total_score > 0:
+        return
+    if segment.relevance_score <= 0:
+        return
+    _rescale_virality(virality, round(float(segment.relevance_score) * 100))
+
+
 def apply_candidate_ranking(
     candidates: List[TranscriptSegment], ranking: CandidateRanking
 ) -> List[TranscriptSegment]:
@@ -1369,6 +1396,8 @@ def apply_candidate_ranking(
     Scores are clamped to be non-increasing down the ranking. Candidates the
     reranker skipped keep their first-pass order after the ranked ones.
     """
+    for candidate in candidates:
+        ensure_virality_estimate(candidate)
     ordered: List[tuple[TranscriptSegment, int]] = []
     seen: set[int] = set()
     for item in ranking.ranking:
@@ -1376,6 +1405,13 @@ def apply_candidate_ranking(
         if candidate_id in seen or not 0 <= candidate_id < len(candidates):
             continue
         seen.add(candidate_id)
+        parts = [item.hook_score, item.engagement_score, item.value_score, item.shareability_score]
+        if all(part is not None for part in parts) and sum(parts) > 0:
+            # The reranker's own breakdown replaces the isolated first-pass one.
+            virality = candidates[candidate_id].virality
+            (virality.hook_score, virality.engagement_score,
+             virality.value_score, virality.shareability_score) = parts
+            virality.total_score = sum(parts)
         ordered.append((candidates[candidate_id], item.score))
     if not ordered:
         raise ValueError("Rerank returned no usable candidate ids")
@@ -1383,7 +1419,8 @@ def apply_candidate_ranking(
     reranked: List[TranscriptSegment] = []
     ceiling = 100
     for segment, score in ordered:
-        ceiling = min(score, ceiling)
+        # A reranker score of 0 means "not given": keep the segment's own estimate.
+        ceiling = min(score if score > 0 else segment.virality.total_score, ceiling)
         _rescale_virality(segment.virality, ceiling)
         reranked.append(segment)
     for index, segment in enumerate(candidates):
@@ -1615,6 +1652,17 @@ def _validate_segments(
                 )
                 segment.text = grounded_text
 
+            # The model sometimes omits the breakdown, leaving the all-zero default.
+            # Derive an estimate from its relevance so clips can still be ranked.
+            if segment.virality and segment.virality.total_score == 0 and not any([
+                segment.virality.hook_score, segment.virality.engagement_score,
+                segment.virality.value_score, segment.virality.shareability_score,
+            ]) and segment.relevance_score > 0:
+                part = max(0, min(25, round(float(segment.relevance_score) * 25)))
+                segment.virality.hook_score = part
+                segment.virality.engagement_score = part
+                segment.virality.value_score = part
+                segment.virality.shareability_score = part
             # Validate virality scores
             if segment.virality:
                 # Ensure total score is sum of subscores
@@ -1735,6 +1783,8 @@ async def get_most_relevant_parts_by_transcript(
         # Retain already-ranked alternatives until picture suitability checks
         # finish. No extra model call is needed when a slate is rejected.
         validated_segments = candidates[: min(24, limit * 2) if include_reserve else limit]
+        for segment in validated_segments:
+            ensure_virality_estimate(segment)
 
         final_analysis = TranscriptAnalysis(
             most_relevant_segments=validated_segments,
@@ -1761,3 +1811,40 @@ async def get_most_relevant_parts_by_transcript(
 def get_most_relevant_parts_sync(transcript: str) -> TranscriptAnalysis:
     """Synchronous wrapper for the async function."""
     return asyncio.run(get_most_relevant_parts_by_transcript(transcript))
+
+
+class PostCopy(BaseModel):
+    """Caption text and hashtags for posting one clip."""
+
+    description: str = Field(description="Short, catchy post caption (1-3 sentences, may use 1-3 emojis)")
+    hashtags: List[str] = Field(description="12 to 15 hashtags, each starting with #, no spaces")
+
+
+post_copy_system_prompt = """You write social media post copy for short vertical video clips (TikTok, Instagram Reels, YouTube Shorts, Facebook Reels).
+Write in the same language as the clip transcript.
+- description: a catchy, curiosity-driven caption grounded ONLY in what happens in the clip (1-3 short sentences). Open with a hook. Do not invent facts. No hashtags inside it.
+- hashtags: 12 to 15 hashtags that help people find the video. Mix: 3-4 broad high-traffic tags (e.g. #fyp #viral #shorts), 4-5 about the topic and action in the clip, 3-4 about the people, creators, channel or game named or clearly present in the transcript, and 1-2 niche tags. Use lowercase without accents or spaces. Never use misleading or unrelated tags."""
+
+
+async def generate_post_copy(title: Optional[str], transcript: str) -> PostCopy:
+    runtime_config = get_config()
+    apply_settings_to_process_env(runtime_config.as_runtime_settings())
+    config_error = _get_missing_llm_key_error(runtime_config.llm, runtime_config)
+    if config_error:
+        raise RuntimeError(config_error)
+    agent = Agent[None, PostCopy](
+        model=_build_transcript_model(runtime_config, runtime_config.llm),
+        output_type=NativeOutput(PostCopy, strict=True) if _uses_native_output(runtime_config.llm) else PostCopy,
+        system_prompt=post_copy_system_prompt,
+        output_retries=2,
+    )
+    prompt = f"Clip title: {title or '(none)'}\nClip transcript:\n{transcript[:6000]}"
+    result = await _run_transcript_analysis(agent, prompt, timeout_seconds=60)
+    copy = result.output
+    seen, tags = set(), []
+    for raw in copy.hashtags:
+        tag = "#" + re.sub(r"[^\w]", "", raw.lstrip("#"), flags=re.UNICODE)
+        if len(tag) > 1 and tag.lower() not in seen:
+            seen.add(tag.lower())
+            tags.append(tag)
+    return PostCopy(description=copy.description.strip(), hashtags=tags[:15])

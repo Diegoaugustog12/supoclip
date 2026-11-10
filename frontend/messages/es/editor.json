@@ -121,7 +121,12 @@
     "center": "Centrar sujeto",
     "landscapeHint": "Este clip contiene detalles a lo ancho. La versión horizontal los mantiene legibles sin recortar contenido.",
     "useLandscape": "Usar versión horizontal",
-    "autoLayout": "Composición generada"
+    "autoLayout": "Composición generada",
+    "layoutTitle": "Diseño",
+    "layoutBody": "Cómo se compone el encuadre 9:16. Cambiarlo rehace solo la imagen: tus cortes, subtítulos y B-roll se mantienen.",
+    "layoutApply": "Aplicar diseño",
+    "layoutWorking": "Rehaciendo…",
+    "layoutFailed": "No se pudo cambiar el diseño"
   },
   "audioPanel": {
     "title": "Audio",

@@ -26,16 +26,17 @@ from .ffmpeg import clamp_even, round_to_even
 from .speaker_framing import analyze_speaker_clip, build_crop_x_expression
 
 FOLLOW_MODES = ("none", "face", "speaker")
-SWITCH_MIN_HOLD_SECONDS = 1.0
-SWITCH_ADVANTAGE = 1.25
+SWITCH_MIN_HOLD_SECONDS = 2.0
+SWITCH_ADVANTAGE = 1.5
 SWITCH_RAMP_SECONDS = 0.25
 DRIFT_RAMP_SECONDS = 0.6
 MAX_JUMP_FRACTION = 0.45
 EYE_LINE = 0.34  # eyes sit this fraction of the panel height from its top
 EYE_IN_FACE = 0.4  # eye line as a fraction of the face box height
-DEAD_X = 0.12  # of the crop width
-DEAD_Y = 0.10  # of the crop height
-SMOOTH_SAMPLES = 5
+DEAD_X = 0.2  # of the crop width
+DEAD_Y = 0.15  # of the crop height
+SMOOTH_SAMPLES = 7
+MAIN_FACE_RATIO = 0.6  # faces smaller than this share of the biggest are background people
 
 Face = Tuple[float, float, float, float]
 
@@ -76,6 +77,9 @@ def pick_targets(
     eye = (start[0], start[1])
     for t, faces in analysis["face_samples"]:
         switched = False
+        if faces:
+            biggest = max(f[3] for f in faces)
+            faces = [f for f in faces if f[3] >= MAIN_FACE_RATIO * biggest]
         if faces:
             near = min(faces, key=lambda f: (_centre(f)[0] - anchor[0]) ** 2 + (_centre(f)[1] - anchor[1]) ** 2)
             target = near

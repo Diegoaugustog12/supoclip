@@ -2,11 +2,15 @@
 
 A panel with ``follow`` set keeps its crop size but its position moves:
 
-- ``face``: the crop stays centred on the face that starts closest to where the
-  user placed it, however the person moves.
-- ``speaker``: the crop jumps to whichever visible face moves its mouth the
-  most (the person talking), holding each choice for a minimum time so it does
-  not flicker.
+- ``face``: the crop stays on the face that starts closest to where the user
+  placed it.
+- ``speaker``: the crop cuts to whichever visible face moves its mouth the most
+  (the person talking), holding each choice for a minimum time.
+
+The camera is steady: it only moves when the person leaves a dead zone around
+the crop centre (then it eases after them), and it cuts quickly when the
+speaker changes. The eyes are placed on a fixed line near the top third of the
+panel, so the face sits high and the body fills the rest.
 
 Both reuse the low-resolution face and motion analysis of ``speaker_framing``.
 The result is a pair of ffmpeg expressions (x and y of the crop) per panel.
@@ -22,11 +26,16 @@ from .ffmpeg import clamp_even, round_to_even
 from .speaker_framing import analyze_speaker_clip, build_crop_x_expression
 
 FOLLOW_MODES = ("none", "face", "speaker")
-KEY_EVERY_SECONDS = 0.6
 SWITCH_MIN_HOLD_SECONDS = 1.0
 SWITCH_ADVANTAGE = 1.25
 SWITCH_RAMP_SECONDS = 0.25
+DRIFT_RAMP_SECONDS = 0.6
 MAX_JUMP_FRACTION = 0.45
+EYE_LINE = 0.34  # eyes sit this fraction of the panel height from its top
+EYE_IN_FACE = 0.4  # eye line as a fraction of the face box height
+DEAD_X = 0.12  # of the crop width
+DEAD_Y = 0.10  # of the crop height
+SMOOTH_SAMPLES = 5
 
 Face = Tuple[float, float, float, float]
 
@@ -36,7 +45,7 @@ def _centre(face: Face) -> Tuple[float, float]:
 
 
 def _activity(analysis: Dict[str, Any], face: Face, t: float) -> float:
-    """Mean frame-to-frame change around the lower part of a face (mouth area)."""
+    """Mouth movement around a face, ignoring whole-head movement."""
     motion = analysis["motion"]
     fps = analysis["motion_fps"]
     cell = analysis["motion_cell"]
@@ -57,25 +66,16 @@ def _activity(analysis: Dict[str, Any], face: Face, t: float) -> float:
     return max(0.0, mouth) * float(face[3]) ** 0.5
 
 
-BODY_DROP_FACES = 1.4
-
-
-def track_centres(
-    analysis: Dict[str, Any], mode: str, start: Tuple[float, float], max_jump: float, max_drop: float
-) -> List[Tuple[float, float, float]]:
-    """(time, centre x, centre y) keyframes for one panel.
-
-    The crop is centred on the person's body, not the face: the centre sits
-    below the face by ``BODY_DROP_FACES`` face heights (limited to ``max_drop``),
-    so the face stays in the upper part and the shoulders and torso are shown.
-    """
-    samples = analysis["face_samples"]
-    keys: List[Tuple[float, float, float]] = []
+def pick_targets(
+    analysis: Dict[str, Any], mode: str, start: Tuple[float, float], max_jump: float
+) -> List[Tuple[float, float, float, bool]]:
+    """(time, eye x, eye y, switched) for the person to frame at each sample."""
     anchor = start
-    drop = 0.0
     held_since = -1e9
-    last_key = -1e9
-    for t, faces in samples:
+    out: List[Tuple[float, float, float, bool]] = []
+    eye = (start[0], start[1])
+    for t, faces in analysis["face_samples"]:
+        switched = False
         if faces:
             near = min(faces, key=lambda f: (_centre(f)[0] - anchor[0]) ** 2 + (_centre(f)[1] - anchor[1]) ** 2)
             target = near
@@ -89,29 +89,76 @@ def track_centres(
                 ):
                     target = best
                     held_since = t
+                    switched = True
             cx, cy = _centre(target)
-            new_drop = min(max_drop, target[3] * BODY_DROP_FACES)
             # A face far from the last position is another person, not movement.
             if mode == "face" and abs(cx - anchor[0]) > max_jump:
                 cx, cy = anchor
+                target = near
             anchor = (cx, cy)
-            drop = new_drop
-        if t - last_key >= KEY_EVERY_SECONDS or not keys:
-            keys.append((t, anchor[0], anchor[1] + drop))
-            last_key = t
+            eye = (cx, target[1] + target[3] * EYE_IN_FACE)
+        out.append((t, eye[0], eye[1], switched))
+    return out
+
+
+def _median(values: List[float], size: int = SMOOTH_SAMPLES) -> List[float]:
+    half = size // 2
+    return [float(np.median(values[max(0, i - half): i + half + 1])) for i in range(len(values))]
+
+
+def steady_camera(
+    targets: List[Tuple[float, float, float, bool]], cw: int, ch: int
+) -> List[Tuple[float, float, float, float, bool]]:
+    """(time, crop centre x, crop centre y, ramp seconds, cut) keyframes.
+
+    The camera holds still while the eyes stay inside a dead zone, eases after
+    them when they leave it, and cuts when the speaker changes.
+    """
+    if not targets:
+        return []
+    ts = [t for t, _, _, _ in targets]
+    # Smooth each stretch between speaker changes separately so a cut stays sharp.
+    xs, ys = [], []
+    start = 0
+    for i in range(1, len(targets) + 1):
+        if i == len(targets) or targets[i][3]:
+            xs += _median([targets[j][1] for j in range(start, i)])
+            ys += _median([targets[j][2] for j in range(start, i)])
+            start = i
+    dead_x, dead_y = DEAD_X * cw, DEAD_Y * ch
+    keys: List[Tuple[float, float, float, float, bool]] = []
+    # The eye line sits EYE_LINE down the panel, so the crop centre is below the eyes.
+    drop = (0.5 - EYE_LINE) * ch
+    cam_x, cam_y = xs[0], ys[0] + drop
+    keys.append((ts[0], cam_x, cam_y, 0.0, False))
+    for i in range(1, len(targets)):
+        want_x, want_y = xs[i], ys[i] + drop
+        cut = targets[i][3]
+        if cut:
+            cam_x, cam_y = want_x, want_y
+            keys.append((ts[i], cam_x, cam_y, SWITCH_RAMP_SECONDS, True))
+            continue
+        moved = False
+        if abs(want_x - cam_x) > dead_x:
+            cam_x = want_x - dead_x * 0.5 * np.sign(want_x - cam_x)
+            moved = True
+        if abs(want_y - cam_y) > dead_y:
+            cam_y = want_y - dead_y * 0.5 * np.sign(want_y - cam_y)
+            moved = True
+        if moved:
+            keys.append((ts[i], float(cam_x), float(cam_y), DRIFT_RAMP_SECONDS, False))
+    keys.append((ts[-1] + 0.5, keys[-1][1], keys[-1][2], 0.0, False))
     return keys
 
 
-def _pieces(keys: List[Tuple[float, float]], hold_switches: bool) -> List[Tuple[float, float, float, float]]:
+def _pieces(keys: List[Tuple[float, float, float, bool]]) -> List[Tuple[float, float, float, float]]:
+    """Linear pieces (start, end, v0, v1): hold, then ease over the key's ramp."""
     pieces: List[Tuple[float, float, float, float]] = []
-    for (t0, v0), (t1, v1) in zip(keys, keys[1:]):
-        if hold_switches and abs(v1 - v0) > 1:
-            ramp_start = max(t0, t1 - SWITCH_RAMP_SECONDS)
-            if ramp_start > t0:
-                pieces.append((t0, ramp_start, v0, v0))
-            pieces.append((ramp_start, t1, v0, v1))
-        else:
-            pieces.append((t0, t1, v0, v1))
+    for (t0, v0, _, _), (t1, v1, ramp, _) in zip(keys, keys[1:]):
+        ramp_start = max(t0, t1 - ramp)
+        if ramp_start > t0:
+            pieces.append((t0, ramp_start, v0, v0))
+        pieces.append((ramp_start, t1, v0, v1) if t1 > ramp_start else (t0, t1, v0, v1))
     return pieces
 
 
@@ -135,18 +182,17 @@ def plan_follow(input_path: Path, width: int, height: int, spec: Dict[str, Any])
         cw = clamp_even(int(round(crop["w"] * width)), 2, round_to_even(width))
         ch = clamp_even(int(round(crop["h"] * height)), 2, round_to_even(height))
         start = ((crop["x"] + crop["w"] / 2) * width, (crop["y"] + crop["h"] / 2) * height)
-        # Start the match from the face, which sits above the crop centre.
         mode = panel["follow"]
-        keys = track_centres(analysis, mode, start, width * MAX_JUMP_FRACTION, ch * 0.25)
+        targets = pick_targets(analysis, mode, start, width * MAX_JUMP_FRACTION)
+        keys = steady_camera(targets, cw, ch)
         if len(keys) < 2:
             continue
         max_x, max_y = max(0, width - cw), max(0, height - ch)
-        xs = [(t, float(np.clip(cx - cw / 2, 0, max_x))) for t, cx, _ in keys]
-        ys = [(t, float(np.clip(cy - ch / 2, 0, max_y))) for t, _, cy in keys]
-        hold = mode == "speaker"
+        xs = [(t, float(np.clip(cx - cw / 2, 0, max_x)), ramp, cut) for t, cx, _, ramp, cut in keys]
+        ys = [(t, float(np.clip(cy - ch / 2, 0, max_y)), ramp, cut) for t, _, cy, ramp, cut in keys]
         plans[i] = {
-            "x": build_crop_x_expression(_pieces(xs, hold)),
-            "y": build_crop_x_expression(_pieces(ys, hold)),
+            "x": build_crop_x_expression(_pieces(xs)),
+            "y": build_crop_x_expression(_pieces(ys)),
         }
-        logger.info("Layout panel %d follows the %s (%d keyframes)", i + 1, mode, len(keys))
+        logger.info("Layout panel %d follows the %s (%d camera moves)", i + 1, mode, len(keys))
     return plans

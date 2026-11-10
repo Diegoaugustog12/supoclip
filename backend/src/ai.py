@@ -1361,6 +1361,16 @@ def _rescale_virality(virality: ViralityAnalysis, new_total: int) -> None:
     virality.total_score = sum(rounded)
 
 
+def ensure_virality_estimate(segment: TranscriptSegment) -> None:
+    """Give a segment whose score breakdown is all zero an estimate from its relevance."""
+    virality = segment.virality
+    if virality is None or virality.total_score > 0:
+        return
+    if segment.relevance_score <= 0:
+        return
+    _rescale_virality(virality, round(float(segment.relevance_score) * 100))
+
+
 def apply_candidate_ranking(
     candidates: List[TranscriptSegment], ranking: CandidateRanking
 ) -> List[TranscriptSegment]:
@@ -1369,6 +1379,8 @@ def apply_candidate_ranking(
     Scores are clamped to be non-increasing down the ranking. Candidates the
     reranker skipped keep their first-pass order after the ranked ones.
     """
+    for candidate in candidates:
+        ensure_virality_estimate(candidate)
     ordered: List[tuple[TranscriptSegment, int]] = []
     seen: set[int] = set()
     for item in ranking.ranking:
@@ -1383,7 +1395,8 @@ def apply_candidate_ranking(
     reranked: List[TranscriptSegment] = []
     ceiling = 100
     for segment, score in ordered:
-        ceiling = min(score, ceiling)
+        # A reranker score of 0 means "not given": keep the segment's own estimate.
+        ceiling = min(score if score > 0 else segment.virality.total_score, ceiling)
         _rescale_virality(segment.virality, ceiling)
         reranked.append(segment)
     for index, segment in enumerate(candidates):
@@ -1746,6 +1759,8 @@ async def get_most_relevant_parts_by_transcript(
         # Retain already-ranked alternatives until picture suitability checks
         # finish. No extra model call is needed when a slate is rejected.
         validated_segments = candidates[: min(24, limit * 2) if include_reserve else limit]
+        for segment in validated_segments:
+            ensure_virality_estimate(segment)
 
         final_analysis = TranscriptAnalysis(
             most_relevant_segments=validated_segments,

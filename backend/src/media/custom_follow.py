@@ -23,8 +23,8 @@ from .speaker_framing import analyze_speaker_clip, build_crop_x_expression
 
 FOLLOW_MODES = ("none", "face", "speaker")
 KEY_EVERY_SECONDS = 0.6
-SWITCH_MIN_HOLD_SECONDS = 1.2
-SWITCH_ADVANTAGE = 1.4
+SWITCH_MIN_HOLD_SECONDS = 1.0
+SWITCH_ADVANTAGE = 1.25
 SWITCH_RAMP_SECONDS = 0.25
 MAX_JUMP_FRACTION = 0.45
 
@@ -43,11 +43,18 @@ def _activity(analysis: Dict[str, Any], face: Face, t: float) -> float:
     a, b = max(0, int((t - 0.5) * fps)), min(len(motion), int((t + 0.5) * fps) + 1)
     if b <= a:
         return 0.0
-    x0, x1 = int(face[0] / cell), max(int(face[0] / cell) + 1, int((face[0] + face[2]) / cell))
-    y0 = int((face[1] + face[3] * 0.45) / cell)
-    y1 = max(y0 + 1, int((face[1] + face[3] * 1.1) / cell))
-    region = motion[a:b, y0:y1, x0:x1]
-    return float(region.mean()) if region.size else 0.0
+    x0, x1 = max(0, int(face[0] / cell)), max(int(face[0] / cell) + 1, int((face[0] + face[2]) / cell))
+
+    def band(top: float, bottom: float) -> float:
+        y0 = max(0, int((face[1] + face[3] * top) / cell))
+        y1 = max(y0 + 1, int((face[1] + face[3] * bottom) / cell))
+        region = motion[a:b, y0:y1, x0:x1]
+        return float(region.mean()) if region.size else 0.0
+
+    # Moving the whole head shows in the forehead too; only the mouth moves on its own.
+    mouth = band(0.6, 1.05) - 0.6 * band(0.0, 0.4)
+    # Nearer people (bigger faces) are usually the ones on the microphone.
+    return max(0.0, mouth) * float(face[3]) ** 0.5
 
 
 BODY_DROP_FACES = 1.4

@@ -608,6 +608,22 @@ class RankedCandidate(BaseModel):
         default="",
         description="One short sentence on why it ranks here versus the others",
     )
+    hook_score: Optional[int] = Field(
+        default=None, ge=0, le=25,
+        description="Hook strength of the opening seconds, 0-25, compared with the other candidates",
+    )
+    engagement_score: Optional[int] = Field(
+        default=None, ge=0, le=25,
+        description="How engaging or entertaining the clip is, 0-25",
+    )
+    value_score: Optional[int] = Field(
+        default=None, ge=0, le=25,
+        description="Payoff and value delivered (lesson, punchline, story beat), 0-25",
+    )
+    shareability_score: Optional[int] = Field(
+        default=None, ge=0, le=25,
+        description="How likely someone is to send or save it, 0-25",
+    )
 
 
 class CandidateRanking(BaseModel):
@@ -634,6 +650,7 @@ Rules:
 - Rank a candidate last when its speech says the picture is interrupted, unavailable or broken (a technical problem, "these images cannot be shown"); it plays over a slate, not footage.
 - Rank every candidate exactly once, using the given candidate_id values.
 - Scores are comparative: spread them out so better clips clearly score higher. The best candidate should usually land between 80 and 95; weak, contextless, or filler candidates belong below 50.
+- For every candidate also give hook_score, engagement_score, value_score and shareability_score (each 0-25, comparative and different from one candidate to the next, never all equal). Their sum should be close to the candidate's score.
 - Return valid JSON only, with a "ranking" list ordered from best to worst."""
 
 _rerank_agent: Optional[Agent[None, CandidateRanking]] = None
@@ -1388,6 +1405,13 @@ def apply_candidate_ranking(
         if candidate_id in seen or not 0 <= candidate_id < len(candidates):
             continue
         seen.add(candidate_id)
+        parts = [item.hook_score, item.engagement_score, item.value_score, item.shareability_score]
+        if all(part is not None for part in parts) and sum(parts) > 0:
+            # The reranker's own breakdown replaces the isolated first-pass one.
+            virality = candidates[candidate_id].virality
+            (virality.hook_score, virality.engagement_score,
+             virality.value_score, virality.shareability_score) = parts
+            virality.total_score = sum(parts)
         ordered.append((candidates[candidate_id], item.score))
     if not ordered:
         raise ValueError("Rerank returned no usable candidate ids")

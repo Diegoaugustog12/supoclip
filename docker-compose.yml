@@ -315,6 +315,8 @@ services:
       - ./backend/transitions:/app/transitions
       - ./cookies:/app/cookies:ro
     environment: &worker-environment
+      # Above WORKFLOW_PLAN_TIMEOUT_SECONDS: slow models must not lose the task's DB session.
+      - DB_IDLE_IN_TRANSACTION_TIMEOUT_MS=${WORKER_DB_IDLE_IN_TRANSACTION_TIMEOUT_MS:-3600000}
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
       - SUPOCLIP_SERVICE=worker

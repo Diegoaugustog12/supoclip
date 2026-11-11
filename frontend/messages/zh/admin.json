@@ -155,6 +155,10 @@
     "updatedBy": "{date}，{email}",
     "empty": "暂无功能开关。",
     "toggle": "{platform} 上的 {flag}",
-    "updateFailed": "无法更新开关"
+    "updateFailed": "无法更新开关",
+    "descriptions": {
+      "tiktok_publishing": "TikTok 连接与发布。关闭时 TikTok 显示为已暂停并附简短说明。TikTok 的 Direct Post 审核通过后再开启。",
+      "workflows": "系列、话题、回顾和预告片，以及要求和高级设置。环境变量 WORKFLOWS_ACCESS 也必须允许。"
+    }
   }
 }

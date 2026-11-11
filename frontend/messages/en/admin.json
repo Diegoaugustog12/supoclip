@@ -155,6 +155,10 @@
     "updatedBy": "{date} by {email}",
     "empty": "No feature flags yet.",
     "toggle": "{flag} on {platform}",
-    "updateFailed": "Failed to update the flag"
+    "updateFailed": "Failed to update the flag",
+    "descriptions": {
+      "tiktok_publishing": "TikTok connecting and publishing. Off shows TikTok as paused with a short notice. Turn on once TikTok's Direct Post audit passes.",
+      "workflows": "Series, topic, recap and trailer, plus instructions and Advanced settings. The WORKFLOWS_ACCESS env gate must allow them too."
+    }
   }
 }

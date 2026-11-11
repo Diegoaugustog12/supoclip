@@ -201,6 +201,7 @@ These determine whether the app behaves like an open self-hosted product or a mo
 |---|---|---|
 | `SELF_HOST` | `true` | When `true`, monetization is disabled |
 | `REQUIRE_LOGIN` | `false` in docker-compose | When `false`, nobody signs in: every visitor uses the instance's single account (the oldest one). Set `true` before exposing the app |
+| `APP_LOCALE` | `pt` in docker-compose | Interface language for visitors who haven't picked one in the language menu (`en`, `es`, `pt`, `de`, `zh`, `id`). Empty follows the browser |
 | `BACKEND_AUTH_SECRET` | unset in practice | Shared secret for trusted frontend-to-backend requests in hosted mode |
 | `AUTH_SIGNATURE_TTL_SECONDS` | `300` | Lifetime of backend request signatures |
 | `PRO_PLAN_MINUTE_LIMIT` | `600` | Hosted-mode Pro allowance, in minutes of source video per month (`0` = unlimited) |

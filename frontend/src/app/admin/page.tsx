@@ -312,7 +312,7 @@ export default async function AdminPage({
                   <tr key={flag.key} className="align-top hover:bg-muted/30">
                     <td className={td}>
                       <p className="font-mono font-medium">{flag.key}</p>
-                      {flag.description && <p className="max-w-md text-xs text-muted-foreground">{flag.description}</p>}
+                      {(t.has(`flags.descriptions.${flag.key}`) || flag.description) && <p className="max-w-md text-xs text-muted-foreground">{t.has(`flags.descriptions.${flag.key}`) ? t(`flags.descriptions.${flag.key}`) : flag.description}</p>}
                     </td>
                     <td className={td}><FeatureFlagSwitch flagKey={flag.key} field="web_enabled" checked={flag.web_enabled} label={t("flags.toggle", { flag: flag.key, platform: t("flags.web") })} /></td>
                     <td className={td}><FeatureFlagSwitch flagKey={flag.key} field="ios_enabled" checked={flag.ios_enabled} label={t("flags.toggle", { flag: flag.key, platform: t("flags.ios") })} /></td>

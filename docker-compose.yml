@@ -35,6 +35,7 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
+      - ./frontend/messages:/app/messages
       - ./frontend/prisma:/app/prisma
       - ./CHANGELOG.md:/app/CHANGELOG.md:ro
     environment:
@@ -47,6 +48,7 @@ services:
       - NEXT_PUBLIC_LANDING_ONLY_MODE=${NEXT_PUBLIC_LANDING_ONLY_MODE:-false}
       - DISABLE_SIGN_UP=${DISABLE_SIGN_UP:-false}
       - REQUIRE_LOGIN=${REQUIRE_LOGIN:-false}
+      - APP_LOCALE=${APP_LOCALE:-pt}
       - BACKEND_AUTH_SECRET=${BACKEND_AUTH_SECRET}
       - APP_SETTINGS_ENCRYPTION_KEY=${APP_SETTINGS_ENCRYPTION_KEY}
       - DATABASE_URL=postgresql://supoclip:supoclip_password@postgres:5432/supoclip

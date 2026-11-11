@@ -155,6 +155,10 @@
     "updatedBy": "{date} von {email}",
     "empty": "Noch keine Feature-Flags.",
     "toggle": "{flag} auf {platform}",
-    "updateFailed": "Flag konnte nicht geändert werden"
+    "updateFailed": "Flag konnte nicht geändert werden",
+    "descriptions": {
+      "tiktok_publishing": "TikTok verbinden und veröffentlichen. Aus zeigt TikTok mit einem kurzen Hinweis als pausiert. Einschalten, sobald TikToks Direct-Post-Prüfung bestanden ist.",
+      "workflows": "Serie, Thema, Zusammenfassung und Trailer, dazu Anweisungen und erweiterte Einstellungen. Die Variable WORKFLOWS_ACCESS muss sie ebenfalls erlauben."
+    }
   }
 }

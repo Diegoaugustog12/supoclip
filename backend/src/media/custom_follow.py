@@ -162,7 +162,13 @@ def _pieces(keys: List[Tuple[float, float, float, bool]]) -> List[Tuple[float, f
         ramp_start = max(t0, t1 - ramp)
         if ramp_start > t0:
             pieces.append((t0, ramp_start, v0, v0))
-        pieces.append((ramp_start, t1, v0, v1) if t1 > ramp_start else (t0, t1, v0, v1))
+        if t1 > ramp_start:
+            pieces.append((ramp_start, t1, v0, v1))
+        # With no ramp (the closing key) the hold above already spans to t1.
+        # Emitting a second piece over the same window doubled the crop
+        # position there, throwing the crop off the face at the clip's end.
+    if not pieces and len(keys) > 1:
+        pieces.append((keys[0][0], keys[-1][0], keys[0][1], keys[0][1]))
     return pieces
 
 

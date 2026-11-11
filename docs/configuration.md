@@ -411,7 +411,7 @@ Plain `yt-dlp` from a datacenter IP is often stopped with "Sign in to confirm yo
 | `YOUTUBE_PROXY_URL` | empty | Proxy template. `{session}` becomes a per-job sticky id. `{country}` is optional. |
 | `YOUTUBE_PROXY_COUNTRY` | empty | Two-letter country code substituted into `{country}`. Other values are ignored. |
 | `YOUTUBE_POT_PROVIDER_URL` | empty | bgutil HTTP base URL, for example `http://bgutil:4416`. |
-| `YOUTUBE_DOWNLOAD_MAX_BYTES` | `2000000000` | Per-job byte cap across audio, sections, and a full-file fallback. |
+| `YOUTUBE_DOWNLOAD_MAX_BYTES` | `20000000000` | Per-job byte cap across audio, sections, and a full-file fallback. |
 | `YOUTUBE_SECTION_PADDING_SECONDS` | `10` | Padding around each selected clip before overlapping ranges merge. |
 | `YOUTUBE_MAX_HEIGHT` | `1080` | Video height cap. Values above 1080 are clamped. |
 | `YOUTUBE_SOURCE_CACHE` | `on` | Keep audio and sections so later edits reuse them. `off` deletes sources after each task. |

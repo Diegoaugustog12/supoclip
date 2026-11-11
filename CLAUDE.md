@@ -269,7 +269,7 @@ RERANK_LLM=                          # Optional; model for the long-video candid
 YOUTUBE_DOWNLOAD_PROVIDER=yt_dlp     # yt_dlp | apify
 YOUTUBE_PROXY_URL=                   # Optional residential proxy template; empty = off
 YOUTUBE_POT_PROVIDER_URL=            # Optional bgutil base URL (http://bgutil:4416)
-YOUTUBE_DOWNLOAD_MAX_BYTES=2000000000
+YOUTUBE_DOWNLOAD_MAX_BYTES=20000000000
 YOUTUBE_MAX_HEIGHT=1080              # Hard cap; lower values are honored
 APIFY_EXPENSIVE_FALLBACKS=false      # Skip high-cap Apify fallback actors
 

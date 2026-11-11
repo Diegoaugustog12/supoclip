@@ -759,7 +759,7 @@ def download_youtube_video(
     _remove_cached_downloads(downloader.temp_dir, video_id)
 
     config = get_config()
-    job_budget = budget or ByteBudget(getattr(config, "youtube_download_max_bytes", 2_000_000_000))
+    job_budget = budget or ByteBudget(getattr(config, "youtube_download_max_bytes", 20_000_000_000))
     geo_error: Optional[BaseException] = None
     attempted_providers = 0
 

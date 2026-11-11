@@ -69,7 +69,7 @@ class Config:
         self.youtube_proxy_timeout_seconds = self._get_int_env("YOUTUBE_PROXY_TIMEOUT_SECONDS", 300)
         self.youtube_proxy_country = os.getenv("YOUTUBE_PROXY_COUNTRY", "").strip()
         self.youtube_pot_provider_url = os.getenv("YOUTUBE_POT_PROVIDER_URL", "").strip()
-        self.youtube_download_max_bytes = self._get_int_env("YOUTUBE_DOWNLOAD_MAX_BYTES", 2_000_000_000)
+        self.youtube_download_max_bytes = self._get_int_env("YOUTUBE_DOWNLOAD_MAX_BYTES", 20_000_000_000)
         self.youtube_section_padding_seconds = self._get_float_env("YOUTUBE_SECTION_PADDING_SECONDS", 10.0)
         self.youtube_max_height = self._get_int_env("YOUTUBE_MAX_HEIGHT", 1080)
         self.youtube_source_cache = self._get_bool_env("YOUTUBE_SOURCE_CACHE", True)

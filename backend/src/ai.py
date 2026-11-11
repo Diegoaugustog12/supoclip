@@ -3,7 +3,7 @@ AI-related functions for transcript analysis with enhanced precision and viralit
 """
 
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Literal
+from typing import List, Dict, Any, Optional, Literal, Sequence
 import asyncio
 import logging
 import math
@@ -26,6 +26,7 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from .config import Config, get_config
 from .clip_duration import clip_duration
+from .replay_heatmap import heat_between as replay_heat_between, rank_bonus as replay_rank_bonus
 from .runtime_settings import apply_settings_to_process_env
 from .workflows.prompts import instructions_block
 
@@ -1329,6 +1330,28 @@ def dedupe_overlapping_segments(
     return [segment for segment, _ in kept]
 
 
+def apply_replay_ranking(
+    candidates: List[TranscriptSegment], replay_bins: Sequence[Any]
+) -> List[TranscriptSegment]:
+    """Lift clips that sit on YouTube's most-replayed moments.
+
+    A bounded bonus (a few score points) only reorders close calls; scores
+    themselves stay the model's, and a weak clip never overtakes a strong one.
+    """
+    for candidate in candidates:
+        ensure_virality_estimate(candidate)
+
+    def effective(segment: TranscriptSegment) -> float:
+        start, end = _segment_bounds_seconds(segment)
+        base = segment.virality.total_score if segment.virality else 0
+        return base + replay_rank_bonus(replay_heat_between(replay_bins, start, end))
+
+    ranked = sorted(candidates, key=effective, reverse=True)
+    if [id(s) for s in ranked] != [id(s) for s in candidates]:
+        logger.info("Replay peaks reordered the clip candidates")
+    return ranked
+
+
 def max_final_clips_for_duration(
     source_seconds: float, max_clips: int = MAX_FINAL_CLIPS
 ) -> int:
@@ -1721,6 +1744,7 @@ async def get_most_relevant_parts_by_transcript(
     include_reserve: bool = False,
     *,
     instructions: str | None = None,
+    replay_bins: Sequence[Any] | None = None,
 ) -> TranscriptAnalysis:
     """Get the most relevant parts of a transcript with virality scoring.
 
@@ -1775,6 +1799,8 @@ async def get_most_relevant_parts_by_transcript(
         candidates = dedupe_overlapping_segments(candidates)
         if len(windows) > 1:
             candidates = await rerank_candidates(candidates, performance_context, **steering)
+        if replay_bins:
+            candidates = apply_replay_ranking(candidates, replay_bins)
 
         source_seconds = max(
             (line["end_seconds"] for line in transcript_lines), default=0

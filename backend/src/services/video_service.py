@@ -5,7 +5,7 @@ Video service - handles video processing business logic.
 import asyncio
 import copy
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Callable, Awaitable
+from typing import List, Dict, Any, Optional, Callable, Awaitable, Sequence
 import logging
 import json
 import subprocess
@@ -64,6 +64,7 @@ from ..clip_source_map import (
     save_clip_source_ranges,
 )
 from ..ai import get_most_relevant_parts_by_transcript, max_final_clips_for_duration
+from ..replay_heatmap import find_peaks, merge_clip_signals, normalize_heatmap
 from ..clip_openings import OPENING_HOOK_PENALTY, opening_text_issue, review_opening
 from ..clip_duration import clip_duration
 from ..config import get_config
@@ -810,6 +811,7 @@ class VideoService:
         performance_context: Optional[str] = None,
         clip_length: str = "auto",
         instructions: Optional[str] = None,
+        replay_bins: Optional[Sequence[Any]] = None,
     ) -> Any:
         """
         Analyze transcript with AI to find relevant segments.
@@ -825,6 +827,7 @@ class VideoService:
             clip_length=clip_length,
             include_reserve=True,
             **({"instructions": instructions} if instructions else {}),
+            **({"replay_bins": replay_bins} if replay_bins else {}),
         )
         logger.info(
             f"AI analysis complete: {len(relevant_parts.most_relevant_segments)} segments found"
@@ -1148,6 +1151,7 @@ class VideoService:
         save_checkpoint: Callable[[Dict[str, Any]], Awaitable[None]],
         instructions: Optional[str] = None,
         max_clips: Optional[int] = None,
+        replay_heatmap: Optional[Any] = None,
     ) -> tuple[Any, List[Dict[str, Any]], int, bool]:
         """Pick standalone highlights: (analysis, ranked segments with reserve, clip limit, final plan).
 
@@ -1204,12 +1208,18 @@ class VideoService:
             except Exception as exc:
                 logger.warning("Clip signal extraction failed: %s", exc)
                 clip_signals = None
+            replay_bins = normalize_heatmap(replay_heatmap)
+            if replay_bins:
+                peaks = find_peaks(replay_bins)
+                logger.info("YouTube replay graph: %d peaks used as clip signals", len(peaks))
+                clip_signals = merge_clip_signals(clip_signals, peaks)
             relevant_parts = await VideoService.analyze_transcript(
                 transcript,
                 clip_signals=clip_signals,
                 performance_context=performance_context,
                 clip_length=clip_length,
                 **({"instructions": instructions} if instructions else {}),
+                **({"replay_bins": replay_bins} if replay_bins else {}),
             )
 
         await save_checkpoint({"analysis": {
@@ -1377,6 +1387,7 @@ class VideoService:
             if progress_callback:
                 await progress_callback(10, "Downloading video...", "processing")
 
+            replay_heatmap = None
             if source_type == "youtube":
                 job_budget = ByteBudget(
                     getattr(runtime_config, "youtube_download_max_bytes", 2_000_000_000)
@@ -1397,6 +1408,7 @@ class VideoService:
                     logger.warning("YouTube metadata timed out; trying saved media and download providers")
                 source_duration = None
                 if video_info:
+                    replay_heatmap = video_info.get("heatmap")
                     duration = video_info.get("duration", 0)
                     source_duration = duration or None
                     if duration and duration > duration_limit:
@@ -1577,6 +1589,7 @@ class VideoService:
                     save_checkpoint=save_checkpoint,
                     **({"instructions": instructions} if instructions else {}),
                     **({"max_clips": requested_clips} if requested_clips is not None else {}),
+                    replay_heatmap=replay_heatmap,
                 )
             else:
                 if should_cancel and await should_cancel():

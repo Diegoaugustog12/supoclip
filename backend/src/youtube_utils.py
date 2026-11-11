@@ -342,6 +342,7 @@ def _fetch_video_info_with_ytdlp(
         "resolution": info.get("resolution"),
         "fps": info.get("fps"),
         "filesize": info.get("filesize"),
+        "heatmap": info.get("heatmap"),
     }
 
 

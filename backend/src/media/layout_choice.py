@@ -16,7 +16,7 @@ from typing import Any, Dict, Iterator, Optional
 
 VALID_LAYOUTS = {
     "auto", "reaction_top", "reaction_bottom", "reaction_dynamic", "stack", "speaker",
-    "custom",
+    "duo", "custom",
 }
 
 _forced_layout: ContextVar[str] = ContextVar("forced_layout", default="auto")

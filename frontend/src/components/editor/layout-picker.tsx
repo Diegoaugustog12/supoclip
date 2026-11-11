@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { editorRequest } from "@/components/editor/use-editor";
 
-const BUILT_IN = ["auto", "reaction_top", "reaction_bottom", "reaction_dynamic", "stack", "speaker"] as const;
+const BUILT_IN = ["auto", "reaction_top", "reaction_bottom", "reaction_dynamic", "stack", "speaker", "duo"] as const;
 
 type Saved = { id: string; name: string };
 

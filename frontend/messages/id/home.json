@@ -58,7 +58,8 @@
     "reaction_bottom": { "label": "Webcam di bawah", "hint": "Game atau video di atas, webcam di bawah" },
     "reaction_dynamic": { "label": "Webcam, game, keduanya", "hint": "Berganti sesuai ucapan: dibuka di webcam, game saat jeda" },
     "stack": { "label": "Dua bertumpuk", "hint": "Dua orang, satu di atas yang lain" },
-    "speaker": { "label": "Pembicara aktif", "hint": "Hanya menampilkan yang sedang bicara" }
+    "speaker": { "label": "Pembicara aktif", "hint": "Hanya menampilkan yang sedang bicara" },
+    "duo": { "label": "Terbagi atau pembicara", "hint": "Dua orang: layar terbagi. Satu: mengikuti yang berbicara" }
   },
   "framingOptions": {
     "vertical": {

@@ -172,6 +172,23 @@ def _pieces(keys: List[Tuple[float, float, float, bool]]) -> List[Tuple[float, f
     return pieces
 
 
+def follow_expressions(
+    analysis: Dict[str, Any], mode: str, start: Tuple[float, float], cw: int, ch: int, width: int, height: int
+) -> Optional[Dict[str, str]]:
+    """Crop x/y expressions that keep a ``cw`` x ``ch`` crop on a face or the speaker."""
+    targets = pick_targets(analysis, mode, start, width * MAX_JUMP_FRACTION)
+    keys = steady_camera(targets, cw, ch)
+    if len(keys) < 2:
+        return None
+    max_x, max_y = max(0, width - cw), max(0, height - ch)
+    xs = [(t, float(np.clip(cx - cw / 2, 0, max_x)), ramp, cut) for t, cx, _, ramp, cut in keys]
+    ys = [(t, float(np.clip(cy - ch / 2, 0, max_y)), ramp, cut) for t, _, cy, ramp, cut in keys]
+    return {
+        "x": build_crop_x_expression(_pieces(xs)),
+        "y": build_crop_x_expression(_pieces(ys)),
+    }
+
+
 def plan_follow(input_path: Path, width: int, height: int, spec: Dict[str, Any]) -> Dict[int, Dict[str, str]]:
     """Crop x/y expressions for every panel that follows a face or the speaker."""
     panels = spec.get("panels") or []
@@ -193,16 +210,9 @@ def plan_follow(input_path: Path, width: int, height: int, spec: Dict[str, Any])
         ch = clamp_even(int(round(crop["h"] * height)), 2, round_to_even(height))
         start = ((crop["x"] + crop["w"] / 2) * width, (crop["y"] + crop["h"] / 2) * height)
         mode = panel["follow"]
-        targets = pick_targets(analysis, mode, start, width * MAX_JUMP_FRACTION)
-        keys = steady_camera(targets, cw, ch)
-        if len(keys) < 2:
+        expressions = follow_expressions(analysis, mode, start, cw, ch, width, height)
+        if expressions is None:
             continue
-        max_x, max_y = max(0, width - cw), max(0, height - ch)
-        xs = [(t, float(np.clip(cx - cw / 2, 0, max_x)), ramp, cut) for t, cx, _, ramp, cut in keys]
-        ys = [(t, float(np.clip(cy - ch / 2, 0, max_y)), ramp, cut) for t, _, cy, ramp, cut in keys]
-        plans[i] = {
-            "x": build_crop_x_expression(_pieces(xs)),
-            "y": build_crop_x_expression(_pieces(ys)),
-        }
-        logger.info("Layout panel %d follows the %s (%d camera moves)", i + 1, mode, len(keys))
+        plans[i] = expressions
+        logger.info("Layout panel %d follows the %s", i + 1, mode)
     return plans

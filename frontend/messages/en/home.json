@@ -58,7 +58,8 @@
     "reaction_bottom": { "label": "Webcam below", "hint": "Game or video above, webcam below" },
     "reaction_dynamic": { "label": "Webcam, game, both", "hint": "Switches by speech: webcam opens, game in the pauses" },
     "stack": { "label": "Two stacked", "hint": "Two people, one above the other" },
-    "speaker": { "label": "Active speaker", "hint": "Shows only whoever is talking" }
+    "speaker": { "label": "Active speaker", "hint": "Shows only whoever is talking" },
+    "duo": { "label": "Split or speaker", "hint": "Two people: split screen. One: follows who is talking" }
   },
   "framingOptions": {
     "vertical": {

@@ -58,7 +58,8 @@
     "reaction_bottom": { "label": "Webcam embaixo", "hint": "Jogo ou vídeo em cima, webcam embaixo" },
     "reaction_dynamic": { "label": "Webcam, jogo e os dois", "hint": "Alterna pela fala: abre na webcam, jogo nas pausas" },
     "stack": { "label": "Dois empilhados", "hint": "Duas pessoas, uma acima da outra" },
-    "speaker": { "label": "Quem fala", "hint": "Mostra só quem está falando" }
+    "speaker": { "label": "Quem fala", "hint": "Mostra só quem está falando" },
+    "duo": { "label": "Dividida ou quem fala", "hint": "Duas pessoas: tela dividida. Uma: acompanha quem fala" }
   },
   "framingOptions": {
     "vertical": {

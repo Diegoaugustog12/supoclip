@@ -116,6 +116,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
+      - ./cookies:/app/cookies:ro
       - ./backend/src:/app/src
       - uploads:/app/uploads
       - clips:/app/clips
@@ -311,6 +312,7 @@ services:
       - clips:/app/clips
       - ./backend/fonts:/app/fonts
       - ./backend/transitions:/app/transitions
+      - ./cookies:/app/cookies:ro
     environment: &worker-environment
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1

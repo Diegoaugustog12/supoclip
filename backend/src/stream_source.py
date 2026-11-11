@@ -31,6 +31,7 @@ from urllib.parse import parse_qs, urlparse
 import requests
 
 from .config import get_config
+from .youtube_cookies import with_cookies
 from .youtube_proxy import normalize_country, render_proxy_url, sticky_session_id
 from .youtube_source import CachedPiece, assemble_timeline, merge_ranges, ranges_from_segments
 
@@ -276,7 +277,7 @@ def _ydl_options(provider, output, *, audio=False, ranges=None, session=None, so
             {"start_time": a, "end_time": b, "index": i} for i, (a, b) in enumerate(ranges, 1)
         ]
         opts["force_keyframes_at_cuts"] = True
-    return opts
+    return with_cookies(opts)
 
 
 def _socket_timeout(deadline: Optional[float], default: float = 10.0) -> float:

@@ -21,6 +21,7 @@ from .apify_youtube_downloader import ApifyDownloadError, download_video_via_api
 from .config import get_config
 from .download_progress import DownloadRecovery, report_download_recovery
 from .media.ffmpeg import ffprobe_video_size
+from .youtube_cookies import with_cookies
 from .youtube_proxy import (
     YOUTUBE_DOWNLOAD_PROVIDER_YTDLP_PROXY,
     ByteBudget,
@@ -134,7 +135,7 @@ def _build_info_options(task_id: Optional[str] = None) -> Dict[str, Any]:
         ydl_opts.update(base_proxy_params(task_id))
         ydl_opts["skip_download"] = True
         ydl_opts["quiet"] = True
-    return ydl_opts
+    return with_cookies(ydl_opts)
 
 
 def _empty_video_info(video_id: Optional[str] = None) -> Dict[str, Any]:
@@ -621,8 +622,10 @@ def _download_youtube_video_with_ytdlp(
         try:
             logger.info("Download attempt %s/%s", attempt + 1, max_retries)
 
-            ydl_opts = downloader.get_optimal_download_options(
-                video_id, int(quality) if quality else None
+            ydl_opts = with_cookies(
+                downloader.get_optimal_download_options(
+                    video_id, int(quality) if quality else None
+                )
             )
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:

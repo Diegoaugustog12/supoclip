@@ -62,8 +62,10 @@ def _stream_url(url: str) -> tuple:
         "format": "bv*[height<=720][ext=mp4]/bv*[height<=720]/b[height<=720]/b",
         "socket_timeout": 20,
     }
+    from ..youtube_cookies import with_cookies
+
     try:
-        with yt_dlp.YoutubeDL(options) as ydl:
+        with yt_dlp.YoutubeDL(with_cookies(options)) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as exc:
         logger.warning("Preview stream lookup failed: %s", exc)

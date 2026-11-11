@@ -980,3 +980,37 @@ def cleanup_downloaded_files(video_id: str, source_path: Optional[Path] = None):
 def extract_video_id(url: str) -> Optional[str]:
     """Backward compatibility wrapper."""
     return get_youtube_video_id(url)
+
+
+def purge_youtube_media(video_id: str) -> int:
+    """Delete every local file kept for a YouTube video; returns files removed.
+
+    Covers the reusable ``youtube-cache`` store, the full download, partial
+    ``.part`` files, the transcript sidecar and per-provider attempt folders.
+    """
+    import shutil
+
+    from .youtube_source import cache_dir_for
+
+    if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
+        return 0
+    temp_dir = Path(get_config().temp_dir)
+    targets = [cache_dir_for(video_id)]
+    targets += list(temp_dir.glob(f"{video_id}.*"))
+    for prefix in ("apify", "rapidapi", "proxy"):
+        targets += list(temp_dir.glob(f"{prefix}-{video_id}-*"))
+    removed = 0
+    for target in targets:
+        try:
+            resolved = target.resolve()
+            if resolved == temp_dir.resolve() or not resolved.is_relative_to(temp_dir.resolve()):
+                continue
+            if target.is_dir():
+                shutil.rmtree(target, ignore_errors=True)
+                removed += 1
+            elif target.exists():
+                target.unlink()
+                removed += 1
+        except OSError as exc:
+            logger.warning("Could not remove %s: %s", target, exc)
+    return removed

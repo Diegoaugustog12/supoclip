@@ -1144,6 +1144,21 @@ def _is_transient_model_error(error: Exception) -> bool:
     return False
 
 
+async def _run_with_key_rotation(agent: Agent, prompt: str) -> Any:
+    """Run once; on a Gemini quota error move to the next spare Google key."""
+    from . import google_keys
+
+    rotations = 0
+    while True:
+        try:
+            return await agent.run(prompt, **google_keys.run_kwargs(agent))
+        except Exception as error:
+            if rotations >= google_keys.spare_count(agent) or not google_keys.is_quota_error(error):
+                raise
+            rotations += 1
+            google_keys.advance()
+
+
 async def _run_transcript_analysis(
     agent: Agent,
     prompt: str,
@@ -1161,7 +1176,7 @@ async def _run_transcript_analysis(
         async with asyncio.timeout(timeout_seconds):
             for attempt in range(1, TRANSCRIPT_ANALYSIS_MAX_ATTEMPTS + 1):
                 try:
-                    result = await agent.run(prompt)
+                    result = await _run_with_key_rotation(agent, prompt)
                     if hasattr(result, "response"):
                         logger.info("AI analysis completed using model %s", result.response.model_name)
                     return result

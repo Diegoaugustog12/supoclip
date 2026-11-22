@@ -18,6 +18,7 @@ export const NAMESPACES = [
   "home",
   "library",
   "layouts",
+  "automations",
   "task", "tours",
   "editor",
   "social",

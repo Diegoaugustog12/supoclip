@@ -129,5 +129,28 @@
   "privacyLoadFailed": "Couldn’t load publishing options. Refresh and try again.",
   "tiktokPublicUnavailable": "Public isn’t available for this TikTok account. Check its privacy settings in TikTok, then refresh these options.",
   "tiktokPrivateAccountRequired": "TikTok hasn’t approved SupoClip’s app yet, so it only accepts private posts from accounts set to Private. In TikTok, turn on Settings and privacy → Privacy → Private account before publishing.",
-  "tiktokPaused": "TikTok publishing is paused while we fix an issue with TikTok. Your other platforms work as usual."
+  "tiktokPaused": "TikTok publishing is paused while we fix an issue with TikTok. Your other platforms work as usual.",
+  "batch": {
+    "title": "Schedule {count, plural, one {# clip} other {# clips}}",
+    "description": "Clips go out one at a time, in the order they appear, with the gap you choose.",
+    "account": "Account",
+    "noAccount": "No connected account",
+    "start": "First post",
+    "gap": "Gap between clips",
+    "hint": "Title and caption come from the clip itself. You can edit each post afterwards under Social.",
+    "cancel": "Cancel",
+    "submit": "Schedule {count, plural, one {# clip} other {# clips}}",
+    "badDate": "Pick a valid date and time.",
+    "failed": "Could not schedule.",
+    "done": "{count, plural, one {# clip scheduled} other {# clips scheduled}}",
+    "someFailed": "{count, plural, one {# clip was skipped} other {# clips were skipped}}: {reason}",
+    "gaps": {
+      "60": "1 hour",
+      "180": "3 hours",
+      "360": "6 hours",
+      "720": "12 hours",
+      "1440": "1 day",
+      "2880": "2 days"
+    }
+  }
 }

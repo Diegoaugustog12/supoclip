@@ -129,5 +129,28 @@
   "privacyLoadFailed": "No se pudieron cargar las opciones. Actualiza e inténtalo de nuevo.",
   "tiktokPublicUnavailable": "La visibilidad pública no está disponible para esta cuenta de TikTok. Revisa su privacidad en TikTok y actualiza las opciones.",
   "tiktokPrivateAccountRequired": "TikTok aún no ha aprobado la app de SupoClip, así que solo acepta publicaciones privadas de cuentas privadas. Antes de publicar, activa en TikTok Ajustes y privacidad → Privacidad → Cuenta privada.",
-  "tiktokPaused": "La publicación en TikTok está en pausa mientras solucionamos un problema con TikTok. Tus otras plataformas funcionan con normalidad."
+  "tiktokPaused": "La publicación en TikTok está en pausa mientras solucionamos un problema con TikTok. Tus otras plataformas funcionan con normalidad.",
+  "batch": {
+    "title": "Programar {count, plural, one {# clip} other {# clips}}",
+    "description": "Los clips salen uno a uno, en el orden en que aparecen, con el intervalo que elijas.",
+    "account": "Cuenta",
+    "noAccount": "Ninguna cuenta conectada",
+    "start": "Primera publicación",
+    "gap": "Intervalo entre clips",
+    "hint": "El título y el texto salen del propio clip. Puedes editar cada publicación después, en Social.",
+    "cancel": "Cancelar",
+    "submit": "Programar {count, plural, one {# clip} other {# clips}}",
+    "badDate": "Elige una fecha y hora válidas.",
+    "failed": "No se pudo programar.",
+    "done": "{count, plural, one {# clip programado} other {# clips programados}}",
+    "someFailed": "{count, plural, one {# clip se omitió} other {# clips se omitieron}}: {reason}",
+    "gaps": {
+      "60": "1 hora",
+      "180": "3 horas",
+      "360": "6 horas",
+      "720": "12 horas",
+      "1440": "1 día",
+      "2880": "2 días"
+    }
+  }
 }

@@ -178,6 +178,7 @@ PostgreSQL 15. Schema in `init.sql`. Mixed naming conventions:
 - `GET /social/providers`, `GET /social/connections` — configured platforms and connected accounts
 - `POST /social/connections/{provider}/authorize` + `/callback` — OAuth handshake (session auth only)
 - `POST /social/posts` — publish or schedule a clip; `GET /social/posts?task_id=` — list with metrics
+- `POST /social/posts/batch` — schedule several clips of one task on one account, one every `interval_minutes` (15 min–7 days, max 20; `SocialService.create_batch`, UI: "Schedule selected" on the task page's selection bar)
 - `POST /social/posts/{id}/cancel|retry|refresh-metrics`, `DELETE /social/posts/{id}`
 - `GET /social/performance` — metrics by hook type / platform / clip length (also fed into the AI prompt)
 - `GET /social/performance/timeseries?days=30` — daily new views from metrics snapshots (Analytics chart)

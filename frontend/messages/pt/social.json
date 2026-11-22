@@ -129,5 +129,28 @@
   "privacyLoadFailed": "Não foi possível carregar as opções. Atualize e tente novamente.",
   "tiktokPublicUnavailable": "A visibilidade pública não está disponível para esta conta do TikTok. Verifique a privacidade no TikTok e atualize as opções.",
   "tiktokPrivateAccountRequired": "O TikTok ainda não aprovou o app do SupoClip, então só aceita publicações privadas de contas privadas. Antes de publicar, ative no TikTok Configurações e privacidade → Privacidade → Conta privada.",
-  "tiktokPaused": "A publicação no TikTok está pausada enquanto corrigimos um problema com o TikTok. As suas outras plataformas funcionam normalmente."
+  "tiktokPaused": "A publicação no TikTok está pausada enquanto corrigimos um problema com o TikTok. As suas outras plataformas funcionam normalmente.",
+  "batch": {
+    "title": "Agendar {count, plural, one {# corte} other {# cortes}}",
+    "description": "Os cortes saem um de cada vez, na ordem em que aparecem, com o intervalo que você escolher.",
+    "account": "Conta",
+    "noAccount": "Nenhuma conta conectada",
+    "start": "Primeira publicação",
+    "gap": "Intervalo entre cortes",
+    "hint": "O título e a legenda vêm do próprio corte. Você pode editar cada publicação depois, em Social.",
+    "cancel": "Cancelar",
+    "submit": "Agendar {count, plural, one {# corte} other {# cortes}}",
+    "badDate": "Escolha uma data e hora válidas.",
+    "failed": "Não foi possível agendar.",
+    "done": "{count, plural, one {# corte agendado} other {# cortes agendados}}",
+    "someFailed": "{count, plural, one {# corte não entrou} other {# cortes não entraram}}: {reason}",
+    "gaps": {
+      "60": "1 hora",
+      "180": "3 horas",
+      "360": "6 horas",
+      "720": "12 horas",
+      "1440": "1 dia",
+      "2880": "2 dias"
+    }
+  }
 }

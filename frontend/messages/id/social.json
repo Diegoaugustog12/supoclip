@@ -129,5 +129,28 @@
   "privacyLoadFailed": "Opsi publikasi tidak dapat dimuat. Perbarui dan coba lagi.",
   "tiktokPublicUnavailable": "Visibilitas publik tidak tersedia untuk akun TikTok ini. Periksa pengaturan privasi di TikTok, lalu perbarui opsi.",
   "tiktokPrivateAccountRequired": "TikTok belum menyetujui aplikasi SupoClip, jadi hanya menerima postingan privat dari akun privat. Sebelum memublikasikan, aktifkan Pengaturan dan privasi → Privasi → Akun privat di TikTok.",
-  "tiktokPaused": "Publikasi ke TikTok dijeda sementara kami memperbaiki masalah dengan TikTok. Platform lainnya tetap berfungsi seperti biasa."
+  "tiktokPaused": "Publikasi ke TikTok dijeda sementara kami memperbaiki masalah dengan TikTok. Platform lainnya tetap berfungsi seperti biasa.",
+  "batch": {
+    "title": "Jadwalkan {count, plural, other {# klip}}",
+    "description": "Klip diposting satu per satu sesuai urutannya, dengan jeda yang kamu pilih.",
+    "account": "Akun",
+    "noAccount": "Belum ada akun terhubung",
+    "start": "Posting pertama",
+    "gap": "Jeda antar klip",
+    "hint": "Judul dan keterangan diambil dari klip. Kamu bisa mengedit tiap posting nanti di Social.",
+    "cancel": "Batal",
+    "submit": "Jadwalkan {count, plural, other {# klip}}",
+    "badDate": "Pilih tanggal dan jam yang valid.",
+    "failed": "Tidak bisa menjadwalkan.",
+    "done": "{count, plural, other {# klip dijadwalkan}}",
+    "someFailed": "{count, plural, other {# klip dilewati}}: {reason}",
+    "gaps": {
+      "60": "1 jam",
+      "180": "3 jam",
+      "360": "6 jam",
+      "720": "12 jam",
+      "1440": "1 hari",
+      "2880": "2 hari"
+    }
+  }
 }

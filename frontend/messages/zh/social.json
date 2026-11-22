@@ -129,5 +129,28 @@
   "privacyLoadFailed": "无法加载发布选项，请刷新后重试。",
   "tiktokPublicUnavailable": "此 TikTok 账号不支持公开发布。请在 TikTok 中检查隐私设置，然后刷新这些选项。",
   "tiktokPrivateAccountRequired": "TikTok 尚未批准 SupoClip 的应用，因此只接受来自私密账号的仅自己可见发布。发布前，请在 TikTok 中开启「设置和隐私 → 隐私 → 私密账号」。",
-  "tiktokPaused": "我们正在修复 TikTok 的一个问题，TikTok 发布暂时暂停。其他平台照常可用。"
+  "tiktokPaused": "我们正在修复 TikTok 的一个问题，TikTok 发布暂时暂停。其他平台照常可用。",
+  "batch": {
+    "title": "定时发布 {count, plural, other {# 个片段}}",
+    "description": "片段按显示顺序逐个发布，间隔由你选择。",
+    "account": "账号",
+    "noAccount": "没有已连接的账号",
+    "start": "第一条发布时间",
+    "gap": "片段间隔",
+    "hint": "标题和文案来自片段本身。之后可在“社交”中编辑每条发布。",
+    "cancel": "取消",
+    "submit": "定时发布 {count, plural, other {# 个片段}}",
+    "badDate": "请选择有效的日期和时间。",
+    "failed": "无法定时发布。",
+    "done": "{count, plural, other {已定时 # 个片段}}",
+    "someFailed": "{count, plural, other {# 个片段被跳过}}：{reason}",
+    "gaps": {
+      "60": "1 小时",
+      "180": "3 小时",
+      "360": "6 小时",
+      "720": "12 小时",
+      "1440": "1 天",
+      "2880": "2 天"
+    }
+  }
 }

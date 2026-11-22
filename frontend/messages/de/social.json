@@ -129,5 +129,28 @@
   "privacyLoadFailed": "Veröffentlichungsoptionen konnten nicht geladen werden. Bitte aktualisieren.",
   "tiktokPublicUnavailable": "Öffentlich ist für dieses TikTok-Konto nicht verfügbar. Prüfe die Datenschutzeinstellungen in TikTok und aktualisiere die Optionen.",
   "tiktokPrivateAccountRequired": "TikTok hat die App von SupoClip noch nicht freigegeben und akzeptiert daher nur private Beiträge von privaten Konten. Aktiviere vor dem Veröffentlichen in TikTok Einstellungen und Datenschutz → Datenschutz → Privates Konto.",
-  "tiktokPaused": "Das Veröffentlichen auf TikTok ist pausiert, während wir ein Problem mit TikTok beheben. Deine anderen Plattformen funktionieren wie gewohnt."
+  "tiktokPaused": "Das Veröffentlichen auf TikTok ist pausiert, während wir ein Problem mit TikTok beheben. Deine anderen Plattformen funktionieren wie gewohnt.",
+  "batch": {
+    "title": "{count, plural, one {# Clip} other {# Clips}} planen",
+    "description": "Die Clips erscheinen nacheinander in der gezeigten Reihenfolge, mit dem gewählten Abstand.",
+    "account": "Konto",
+    "noAccount": "Kein Konto verbunden",
+    "start": "Erster Beitrag",
+    "gap": "Abstand zwischen Clips",
+    "hint": "Titel und Beschreibung stammen vom Clip. Du kannst jeden Beitrag später unter Social bearbeiten.",
+    "cancel": "Abbrechen",
+    "submit": "{count, plural, one {# Clip} other {# Clips}} planen",
+    "badDate": "Wähle ein gültiges Datum und eine Uhrzeit.",
+    "failed": "Planen nicht möglich.",
+    "done": "{count, plural, one {# Clip geplant} other {# Clips geplant}}",
+    "someFailed": "{count, plural, one {# Clip übersprungen} other {# Clips übersprungen}}: {reason}",
+    "gaps": {
+      "60": "1 Stunde",
+      "180": "3 Stunden",
+      "360": "6 Stunden",
+      "720": "12 Stunden",
+      "1440": "1 Tag",
+      "2880": "2 Tage"
+    }
+  }
 }

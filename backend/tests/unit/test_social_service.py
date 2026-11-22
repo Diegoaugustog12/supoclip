@@ -1586,3 +1586,52 @@ async def test_queued_tiktok_post_fails_readably_while_paused(service, tiktok_fl
     assert result["error_message"] == social_module.TIKTOK_PAUSED_MESSAGE
     # The worker has no platform: it asked about both before refusing.
     assert {platform for _, platform, _ in tiktok_flag["checks"][-2:]} == {"web", "ios"}
+
+
+@pytest.mark.asyncio
+async def test_batch_spaces_clips_by_the_gap_and_reports_the_ones_that_fail(service, monkeypatch):
+    async def summary(_self, _user_id):
+        return {"plan": "scale", "can_schedule_posts": True}
+
+    monkeypatch.setattr(social_module.BillingService, "get_usage_summary", summary)
+    account = await _connect(service)
+    start = datetime.now(timezone.utc) + timedelta(hours=1)
+
+    result = await service.create_batch(
+        "user-1",
+        task_id="task-1",
+        clip_ids=["clip-1", "missing-clip", "clip-1"],
+        social_account_id=account["id"],
+        start=start.isoformat(),
+        interval_minutes=120,
+        privacy_level="private",
+    )
+
+    assert [post["clip_id"] for post in result["posts"]] == ["clip-1"]
+    assert result["failures"] == [{"clip_id": "missing-clip", "error": "Clip not found"}]
+    assert result["posts"][0]["status"] == "scheduled"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("interval", [5, 7 * 24 * 60 + 1])
+async def test_batch_refuses_gaps_outside_the_allowed_range(service, interval):
+    account = await _connect(service)
+    with pytest.raises(SocialValidationError):
+        await service.create_batch(
+            "user-1", task_id="task-1", clip_ids=["clip-1"], social_account_id=account["id"],
+            start=None, interval_minutes=interval,
+        )
+
+
+@pytest.mark.asyncio
+async def test_batch_needs_the_creator_plan_for_more_than_one_clip(service, monkeypatch):
+    async def summary(_self, _user_id):
+        return {"plan": "pro", "can_schedule_posts": False}
+
+    monkeypatch.setattr(social_module.BillingService, "get_usage_summary", summary)
+    account = await _connect(service)
+    with pytest.raises(SocialPlanRequired):
+        await service.create_batch(
+            "user-1", task_id="task-1", clip_ids=["clip-1", "clip-2"], social_account_id=account["id"],
+            start=None, interval_minutes=60,
+        )

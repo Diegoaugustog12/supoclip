@@ -290,5 +290,14 @@
     "working": "Legendando {done} de {total}…",
     "done": "{count, plural, one {# clipe legendado} other {# clipes legendados}}",
     "failed": "{count, plural, one {# clipe não pôde ser legendado} other {# clipes não puderam ser legendados}}"
+  },
+  "postCopy": {
+    "heading": "Descrição e hashtags para postar",
+    "generate": "Gerar",
+    "again": "Gerar outra",
+    "error": "Não consegui gerar agora. Tente de novo.",
+    "copyText": "Copiar texto",
+    "copyTags": "Copiar hashtags",
+    "copyAll": "Copiar tudo"
   }
 }

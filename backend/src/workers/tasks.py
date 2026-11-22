@@ -196,6 +196,15 @@ async def refresh_social_metrics(ctx: Dict[str, Any]) -> Dict[str, Any]:
     return {"refreshed": refreshed, "purged_oauth_states": purged}
 
 
+async def check_channel_watches(ctx: Dict[str, Any]) -> Dict[str, Any]:
+    """Cron: look for new videos on the channels users follow (Automations)."""
+    from ..channel_watch import ChannelWatchService
+    from ..database import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as db:
+        return await ChannelWatchService.check_due(db)
+
+
 from ..services.editor_service import prepare_editor, export_editor, combine_editor
 from ..services.clip_export_service import (
     CLIP_EXPORT_JOB_TIMEOUT_SECONDS,
@@ -252,4 +261,6 @@ class WorkerSettings:
         cron(dispatch_scheduled_social_posts, second=0, timeout=300),
         # Hourly: pull audience metrics back for the performance loop.
         cron(refresh_social_metrics, minute=7, second=0, timeout=1800),
+        # Every 5 minutes: each followed channel is checked at most every 10.
+        cron(check_channel_watches, minute={1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56}, second=30, timeout=600),
     ]

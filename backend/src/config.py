@@ -69,7 +69,7 @@ class Config:
         self.youtube_proxy_timeout_seconds = self._get_int_env("YOUTUBE_PROXY_TIMEOUT_SECONDS", 300)
         self.youtube_proxy_country = os.getenv("YOUTUBE_PROXY_COUNTRY", "").strip()
         self.youtube_pot_provider_url = os.getenv("YOUTUBE_POT_PROVIDER_URL", "").strip()
-        self.youtube_download_max_bytes = self._get_int_env("YOUTUBE_DOWNLOAD_MAX_BYTES", 2_000_000_000)
+        self.youtube_download_max_bytes = self._get_int_env("YOUTUBE_DOWNLOAD_MAX_BYTES", 20_000_000_000)
         self.youtube_section_padding_seconds = self._get_float_env("YOUTUBE_SECTION_PADDING_SECONDS", 10.0)
         self.youtube_max_height = self._get_int_env("YOUTUBE_MAX_HEIGHT", 1080)
         self.youtube_source_cache = self._get_bool_env("YOUTUBE_SOURCE_CACHE", True)
@@ -98,16 +98,16 @@ class Config:
             os.getenv("APIFY_LONG_VIDEO_SECONDS", "1800")
         )
 
-        self.max_video_duration = int(os.getenv("MAX_VIDEO_DURATION", "5400"))
+        self.max_video_duration = int(os.getenv("MAX_VIDEO_DURATION", "21600"))
         # YouTube sources can be longer on paid tiers. Uploads continue to use
         # max_video_duration regardless of plan.
         self.pro_youtube_max_video_duration = int(
             os.getenv("PRO_YOUTUBE_MAX_VIDEO_DURATION", str(self.max_video_duration))
         )
         self.scale_youtube_max_video_duration = int(
-            os.getenv("SCALE_YOUTUBE_MAX_VIDEO_DURATION", "10800")
+            os.getenv("SCALE_YOUTUBE_MAX_VIDEO_DURATION", "21600")
         )
-        # 4 GB fits a full-length upload (the duration cap is 90 minutes) at a
+        # 4 GB fits a full-length upload (the duration cap is 6 hours) at a
         # normal 1080p bitrate. Larger files make transcription, storage, and
         # rendering slow and fragile.
         self.max_video_upload_bytes = int(

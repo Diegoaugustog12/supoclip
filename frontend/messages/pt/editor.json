@@ -121,7 +121,12 @@
     "center": "Centralizar assunto",
     "landscapeHint": "Este clipe contém detalhes em toda a largura. A versão horizontal mantém a leitura sem cortar conteúdo.",
     "useLandscape": "Usar versão horizontal",
-    "autoLayout": "Layout gerado"
+    "autoLayout": "Layout gerado",
+    "layoutTitle": "Layout",
+    "layoutBody": "Como o quadro 9:16 é montado. Trocar refaz só a imagem: seus cortes, legendas e B-roll continuam.",
+    "layoutApply": "Aplicar layout",
+    "layoutWorking": "Refazendo…",
+    "layoutFailed": "Não foi possível trocar o layout"
   },
   "audioPanel": {
     "title": "Áudio",

@@ -121,7 +121,12 @@
     "center": "Center subject",
     "landscapeHint": "This clip contains wide detail. A landscape version keeps it readable without cropping content.",
     "useLandscape": "Use landscape version",
-    "autoLayout": "Generated layout"
+    "autoLayout": "Generated layout",
+    "layoutTitle": "Layout",
+    "layoutBody": "How the 9:16 frame is composed. Changing it redoes the picture only: your cuts, captions and B-roll stay.",
+    "layoutApply": "Apply layout",
+    "layoutWorking": "Rebuilding…",
+    "layoutFailed": "Could not change the layout"
   },
   "audioPanel": {
     "title": "Audio",

@@ -46,6 +46,45 @@ def _workflow_meta(value: Any) -> Dict[str, Any]:
 
 _CLIP_COLUMNS = """id, task_id, filename, file_path, start_time, end_time, duration,
        text, relevance_score, reasoning, clip_order, created_at"""
+def ensure_scores(
+    relevance: float, virality: int, hook: int, engagement: int, value: int, shareability: int
+) -> tuple:
+    """Rule: a clip never has an empty score.
+
+    When the model left the breakdown out, estimate it from the clip's relevance
+    (an even split of the 0-100 score over the four criteria); when only the
+    total is missing, sum the criteria.
+    """
+    parts = [int(hook or 0), int(engagement or 0), int(value or 0), int(shareability or 0)]
+    total = int(virality or 0)
+    if total > 0:
+        return total, *parts
+    if sum(parts) > 0:
+        return sum(parts), *parts
+    if relevance and relevance > 0:
+        part = max(0, min(25, round(float(relevance) * 25)))
+        return part * 4, part, part, part, part
+    return 0, *parts
+
+
+def _row_scores(row: Any) -> Dict[str, int]:
+    total, hook, engagement, value, shareability = ensure_scores(
+        getattr(row, "relevance_score", 0) or 0,
+        getattr(row, "virality_score", 0) or 0,
+        getattr(row, "hook_score", 0) or 0,
+        getattr(row, "engagement_score", 0) or 0,
+        getattr(row, "value_score", 0) or 0,
+        getattr(row, "shareability_score", 0) or 0,
+    )
+    return {
+        "virality_score": total,
+        "hook_score": hook,
+        "engagement_score": engagement,
+        "value_score": value,
+        "shareability_score": shareability,
+    }
+
+
 _SCORE_COLUMNS = """virality_score, hook_score, engagement_score, value_score, shareability_score, hook_type,
        hook_title"""
 _WORKFLOW_COLUMNS = "workflow_role, part_number, workflow_meta"
@@ -119,6 +158,9 @@ class ClipRepository:
             "reasoning": reasoning,
             "clip_order": clip_order,
         }
+        virality_score, hook_score, engagement_score, value_score, shareability_score = ensure_scores(
+            relevance_score, virality_score, hook_score, engagement_score, value_score, shareability_score
+        )
         score_params = {
             **base_params,
             "virality_score": virality_score,
@@ -258,11 +300,7 @@ class ClipRepository:
                     "clip_order": row.clip_order,
                     "created_at": row.created_at.isoformat(),
                     "video_url": f"/tasks/{task_id}/clips/{row.id}/file",
-                    "virality_score": getattr(row, "virality_score", 0) or 0,
-                    "hook_score": getattr(row, "hook_score", 0) or 0,
-                    "engagement_score": getattr(row, "engagement_score", 0) or 0,
-                    "value_score": getattr(row, "value_score", 0) or 0,
-                    "shareability_score": getattr(row, "shareability_score", 0) or 0,
+                    **_row_scores(row),
                     "hook_type": getattr(row, "hook_type", None),
                     "hook_title": getattr(row, "hook_title", None),
                     "workflow_role": getattr(row, "workflow_role", None),
@@ -346,11 +384,7 @@ class ClipRepository:
             "relevance_score": row.relevance_score,
             "reasoning": row.reasoning,
             "clip_order": row.clip_order,
-            "virality_score": getattr(row, "virality_score", 0) or 0,
-            "hook_score": getattr(row, "hook_score", 0) or 0,
-            "engagement_score": getattr(row, "engagement_score", 0) or 0,
-            "value_score": getattr(row, "value_score", 0) or 0,
-            "shareability_score": getattr(row, "shareability_score", 0) or 0,
+            **_row_scores(row),
             "hook_type": getattr(row, "hook_type", None),
             "hook_title": getattr(row, "hook_title", None),
             "workflow_role": getattr(row, "workflow_role", None),

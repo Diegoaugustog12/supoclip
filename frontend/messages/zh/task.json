@@ -290,5 +290,14 @@
     "working": "正在添加字幕 {done}/{total}…",
     "done": "{count, plural, other {已为 # 个片段添加字幕}}",
     "failed": "{count, plural, other {# 个片段添加字幕失败}}"
+  },
+  "postCopy": {
+    "heading": "发布文案与话题标签",
+    "generate": "生成",
+    "again": "重新生成",
+    "error": "暂时无法生成，请重试。",
+    "copyText": "复制文案",
+    "copyTags": "复制标签",
+    "copyAll": "全部复制"
   }
 }

@@ -155,6 +155,10 @@
     "updatedBy": "{date} oleh {email}",
     "empty": "Belum ada feature flag.",
     "toggle": "{flag} di {platform}",
-    "updateFailed": "Gagal memperbarui flag"
+    "updateFailed": "Gagal memperbarui flag",
+    "descriptions": {
+      "tiktok_publishing": "Menghubungkan dan memublikasikan ke TikTok. Saat mati, TikTok tampil sebagai dijeda dengan pemberitahuan singkat. Nyalakan setelah audit Direct Post TikTok lolos.",
+      "workflows": "Seri, topik, rekap, dan trailer, ditambah instruksi dan pengaturan lanjutan. Variabel WORKFLOWS_ACCESS juga harus mengizinkannya."
+    }
   }
 }

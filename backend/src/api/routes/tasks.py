@@ -56,6 +56,7 @@ from ...clip_cleanup import (
 from ...video_utils import VALID_OUTPUT_FORMATS
 from ...media.layout_choice import VALID_LAYOUTS
 from ...caption_templates import CAPTION_TEMPLATES
+from ...repositories.layout_preset_repository import LayoutPresetRepository
 from ...admin_auth import require_admin_user, user_is_admin
 from ...source_submission import SourceAttempt
 from ...workflows.contracts import workflow_spec_from_task
@@ -328,10 +329,14 @@ def _merge_task_source_metadata(
     add_subtitles: Any = None,
     cleanup_settings: Dict[str, Any] | None = None,
     layout: Any = None,
+    layout_spec: Any = None,
 ) -> Dict[str, Any]:
     merged = dict(existing or {})
     if isinstance(layout, str) and layout in VALID_LAYOUTS and layout != "auto":
         merged["layout"] = layout
+        if layout == "custom" and isinstance(layout_spec, dict):
+            # A copy: editing or deleting the saved layout never changes this run.
+            merged["layout_spec"] = layout_spec
 
     if isinstance(source_url, str) and source_url:
         merged["url"] = source_url
@@ -596,6 +601,17 @@ async def _create_task(request: Request, db: AsyncSession, attempt: SourceAttemp
             status_code=422,
             detail=f"layout must be one of: {', '.join(sorted(VALID_LAYOUTS))}",
         )
+    layout_spec = None
+    if layout == "custom":
+        layout_id = data.get("layout_id")
+        preset = (
+            await LayoutPresetRepository.get_preset(db, user_id, layout_id)
+            if isinstance(layout_id, str) and db is not None
+            else None
+        )
+        if not preset:
+            raise HTTPException(status_code=404, detail="Layout not found")
+        layout_spec = preset["spec"]
     try:
         clip_length = validate_clip_length(data.get("clip_length", "auto"))
     except ValueError as exc:
@@ -630,6 +646,8 @@ async def _create_task(request: Request, db: AsyncSession, attempt: SourceAttemp
     if layout != "auto":
         # Only a chosen layout changes the key; the default keeps its old one.
         upload_options["layout"] = layout
+        if layout_spec is not None:
+            upload_options["layout_spec"] = layout_spec
     if not workflow_spec.legacy:
         # Plain highlights keep their existing key. The key is a hash, so topic
         # and instructions never leave the process.
@@ -725,6 +743,7 @@ async def _create_task(request: Request, db: AsyncSession, attempt: SourceAttemp
                         add_subtitles=add_subtitles,
                         cleanup_settings=cleanup_settings,
                         layout=layout,
+                        layout_spec=layout_spec,
                     ),
                     db=db,
                 )
@@ -1738,3 +1757,26 @@ async def list_dead_letter_tasks(request: Request, db: AsyncSession = Depends(ge
         return {"total": len(items), "tasks": items}
     finally:
         await redis_client.aclose()
+
+
+@router.post("/{task_id}/clips/{clip_id}/post-copy")
+async def clip_post_copy(
+    task_id: str, clip_id: str, request: Request, db: AsyncSession = Depends(get_db)
+):
+    """A catchy description and hashtags for posting one clip."""
+    task_service = TaskService(db)
+    await _require_task_reader(request, task_service, db, task_id)
+    clip = await task_service.clip_repo.get_clip_by_id(db, clip_id)
+    if not clip or clip.get("task_id") != task_id:
+        raise HTTPException(status_code=404, detail="Clip not found")
+    transcript = str(clip.get("text") or "").strip()
+    if not transcript:
+        raise HTTPException(status_code=422, detail="This clip has no transcript")
+    from ...ai import generate_post_copy
+
+    try:
+        copy = await generate_post_copy(clip.get("hook_title"), transcript)
+    except Exception as exc:
+        logger.warning("Post copy failed: %s", exc)
+        raise HTTPException(status_code=502, detail="Could not write the description right now") from None
+    return {"description": copy.description, "hashtags": copy.hashtags}

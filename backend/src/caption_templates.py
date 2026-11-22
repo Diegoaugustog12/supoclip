@@ -329,6 +329,8 @@ def get_template_info() -> list:
             "font_size": template["font_size"],
             "font_color": template["font_color"],
             "highlight_color": template["highlight_color"],
+            "uppercase": bool(template.get("uppercase", False)),
+            "word_box_color": template.get("word_box_color") if template.get("word_box") else None,
         }
         for name, template in CAPTION_TEMPLATES.items()
     ]

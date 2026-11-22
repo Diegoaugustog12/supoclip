@@ -2,6 +2,8 @@
   "nav": {
     "create": "Erstellen",
     "library": "Mediathek",
+    "layouts": "Layouts",
+    "automations": "Automatisierungen",
     "social": "Social",
     "analytics": "Analysen",
     "agents": "Agenten & API",

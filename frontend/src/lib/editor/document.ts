@@ -155,6 +155,9 @@ export interface EditorState {
   original: EditDocument;
   jobs: ExportJob[];
   captionLooks?: Record<string, CaptionLook>;
+  /** Layout chosen for this clip in the studio ("auto" when none), and the saved layout's id for "custom". */
+  layout?: string;
+  layoutId?: string | null;
   /** Whether the server can make AI edits (an Anthropic key is configured). */
   aiEditing?: boolean;
   aiEditUsage?: AIEditUsage;

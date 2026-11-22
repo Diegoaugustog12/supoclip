@@ -1489,6 +1489,28 @@ def describe_vertical_layout(
     crop_w, crop_h = compute_vertical_crop_dims(width, height)
     duration = ffprobe_duration(input_path)
 
+    # A layout the user drew needs no detection: it is the crops they chose.
+    from .layout_choice import current_layout, current_layout_spec
+
+    if current_layout() == "custom" and current_layout_spec():
+        from .custom_layout import build_custom_layout
+
+        spec = current_layout_spec()
+        from .custom_follow import plan_follow
+
+        custom = build_custom_layout(width, height, spec, plan_follow(input_path, width, height, spec))
+        logger.info("Custom layout: panels %s", custom["heights"])
+        return _described("custom", custom["video_filter"], "complex", custom["caption_y"])
+
+    # Split screen while two people are on screen, otherwise follow the speaker.
+    if current_layout() == "duo":
+        from .duo_layout import build_duo_layout
+
+        duo = build_duo_layout(input_path, width, height, duration)
+        if duo:
+            return _described("custom", duo["video_filter"], "complex", duo["caption_y"])
+        logger.info("Chosen layout 'duo' found no faces in this clip; using auto")
+
     def bleed_caption(samples) -> Optional[float]:
         bottom = dominant_face_bottom(samples, height)
         if bottom is None:

@@ -290,5 +290,14 @@
     "working": "Subtitulando {done} de {total}…",
     "done": "{count, plural, one {# clip subtitulado} other {# clips subtitulados}}",
     "failed": "{count, plural, one {No se pudo subtitular # clip} other {No se pudieron subtitular # clips}}"
+  },
+  "postCopy": {
+    "heading": "Descripción y hashtags para publicar",
+    "generate": "Generar",
+    "again": "Generar otra",
+    "error": "No se pudo generar ahora. Inténtalo de nuevo.",
+    "copyText": "Copiar texto",
+    "copyTags": "Copiar hashtags",
+    "copyAll": "Copiar todo"
   }
 }

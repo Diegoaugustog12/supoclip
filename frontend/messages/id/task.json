@@ -290,5 +290,14 @@
     "working": "Memberi teks {done} dari {total}…",
     "done": "{count, plural, other {# klip diberi teks}}",
     "failed": "{count, plural, other {# klip gagal diberi teks}}"
+  },
+  "postCopy": {
+    "heading": "Deskripsi & hashtag untuk posting",
+    "generate": "Buatkan",
+    "again": "Buat lagi",
+    "error": "Belum bisa dibuat sekarang. Coba lagi.",
+    "copyText": "Salin teks",
+    "copyTags": "Salin hashtag",
+    "copyAll": "Salin semua"
   }
 }

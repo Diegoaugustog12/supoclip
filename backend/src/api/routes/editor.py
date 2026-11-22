@@ -22,7 +22,12 @@ from ...editor_document import (
     editor_lock,
     save_document,
 )
-from ...services.editor_service import caption_looks, read_state, upgrade_document
+from ...services.editor_service import (
+    caption_looks,
+    read_editor_layout,
+    read_state,
+    upgrade_document,
+)
 from ...services.task_service import TaskService
 from ...services.ai_edit_allowance_service import (
     AIEditAllowanceService, AIEditLimitExceeded, refund_ai_edit_usage,
@@ -90,6 +95,9 @@ async def get_editor(
         if state["aiEditing"]:
             state["aiEditUsage"] = await AIEditAllowanceService(db).summary(task["user_id"])
     state["basis"] = clip["filename"]
+    chosen = read_editor_layout(directory)
+    state["layout"] = (chosen or {}).get("layout") or "auto"
+    state["layoutId"] = (chosen or {}).get("layout_id")
     state["jobs"] = [
         {"id": p.stem[4:], **json.loads(p.read_text())}
         for p in sorted(
@@ -122,6 +130,47 @@ async def prepare(
         raise HTTPException(
             503, "The rendering worker is unavailable. Try again shortly."
         )
+    return {"status": "preparing"}
+
+
+@router.post("/{task_id}/clips/{clip_id}/editor/layout", status_code=202)
+async def choose_layout(
+    task_id: str, clip_id: str, request: Request, db: AsyncSession = Depends(get_db)
+):
+    """Re-render the studio's source with another layout, keeping the draft."""
+    from ...media.layout_choice import VALID_LAYOUTS
+    from ...repositories.layout_preset_repository import LayoutPresetRepository
+
+    task, clip, directory = await owned_context(request, db, task_id, clip_id)
+    payload = await _read_json_object(request)
+    layout = payload.get("layout", "auto")
+    if layout not in VALID_LAYOUTS:
+        raise HTTPException(422, "Unknown layout")
+    chosen: dict = {"layout": layout}
+    if layout == "custom":
+        layout_id = payload.get("layout_id")
+        preset = (
+            await LayoutPresetRepository.get_preset(db, task["user_id"], layout_id)
+            if isinstance(layout_id, str)
+            else None
+        )
+        if not preset:
+            raise HTTPException(404, "Layout not found")
+        chosen.update(layout_id=layout_id, layout_spec=preset["spec"])
+    with editor_lock(directory):
+        if read_state(directory).get("status") == "preparing":
+            raise HTTPException(409, "The preview is already being prepared")
+        atomic_json(directory / "editor_layout.json", chosen)
+        # Only the media is rebuilt: draft.json stays, so edits are kept.
+        atomic_json(directory / "asset.json", {"status": "preparing"})
+    try:
+        await JobQueue.enqueue_job("prepare_editor", task_id, clip_id, clip["filename"])
+    except Exception:
+        atomic_json(
+            directory / "asset.json",
+            {"status": "failed", "error": "The rendering worker is unavailable. Try again shortly."},
+        )
+        raise HTTPException(503, "The rendering worker is unavailable. Try again shortly.")
     return {"status": "preparing"}
 
 

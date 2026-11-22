@@ -73,6 +73,9 @@ VIEWS_CHART_MIN_DAYS = 3
 # session the app's web sheet doesn't have.
 MOBILE_STATE_PREFIX = "m."
 MOBILE_CLIENTS = frozenset({"ios"})
+MAX_BATCH_POSTS = 20
+MIN_BATCH_INTERVAL_MINUTES = 15
+MAX_BATCH_INTERVAL_MINUTES = 7 * 24 * 60
 MAX_TITLE_LENGTH = 255
 MAX_CAPTION_LENGTH = 2200
 _HASHTAG_RE = re.compile(r"[^0-9A-Za-z_À-￿]+")
@@ -540,6 +543,66 @@ class SocialService:
             "Created social post %s (%s, %s) for clip %s", post["id"], provider.name, status, clip_id
         )
         return post
+
+    async def create_batch(
+        self,
+        user_id: str,
+        *,
+        task_id: str,
+        clip_ids: List[str],
+        social_account_id: str,
+        start: Optional[str],
+        interval_minutes: int,
+        privacy_level: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Schedule several clips of one task on one account, one every ``interval_minutes``.
+
+        Each clip goes through ``create_post`` (same checks, defaults and limits as a single
+        post). A clip that fails does not stop the others; its slot is simply skipped.
+        """
+        unique_ids = list(dict.fromkeys(str(clip_id) for clip_id in clip_ids if clip_id))
+        if not unique_ids:
+            raise SocialValidationError("Choose at least one clip")
+        if len(unique_ids) > MAX_BATCH_POSTS:
+            raise SocialValidationError(f"You can schedule up to {MAX_BATCH_POSTS} clips at once")
+        if not MIN_BATCH_INTERVAL_MINUTES <= interval_minutes <= MAX_BATCH_INTERVAL_MINUTES:
+            raise SocialValidationError(
+                f"The gap between posts must be {MIN_BATCH_INTERVAL_MINUTES} minutes to "
+                f"{MAX_BATCH_INTERVAL_MINUTES // 1440} days"
+            )
+        first = _parse_schedule(start) or datetime.now(timezone.utc)
+        if len(unique_ids) > 1 or first > datetime.now(timezone.utc) + timedelta(seconds=30):
+            if not await self.can_schedule(user_id):
+                raise SocialPlanRequired(
+                    "Scheduling posts is available on the Creator plan. "
+                    "You can still publish right away."
+                )
+
+        posts: List[Dict[str, Any]] = []
+        failures: List[Dict[str, Any]] = []
+        slot = 0
+        for clip_id in unique_ids:
+            when = first + timedelta(minutes=interval_minutes * slot)
+            try:
+                post = await self.create_post(
+                    user_id,
+                    task_id=task_id,
+                    clip_id=clip_id,
+                    social_account_id=social_account_id,
+                    title=None,
+                    caption=None,
+                    hashtags=None,
+                    privacy_level=privacy_level,
+                    scheduled_for=when.isoformat(),
+                )
+            except SocialError as exc:
+                failures.append({"clip_id": clip_id, "error": str(exc)})
+                if isinstance(exc, (SocialPlanRequired, SocialProviderUnavailable)):
+                    break  # the rest would fail the same way
+                continue
+            posts.append(post)
+            slot += 1
+        return {"posts": posts, "failures": failures}
 
     async def _enqueue_publish(
         self, post_id: str, attempts: int, defer_seconds: int = 0

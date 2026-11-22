@@ -2,6 +2,8 @@
   "nav": {
     "create": "Buat",
     "library": "Pustaka",
+    "layouts": "Tata letak",
+    "automations": "Otomatisasi",
     "social": "Sosial",
     "analytics": "Analitik",
     "agents": "Agen & API",

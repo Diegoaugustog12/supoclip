@@ -155,6 +155,10 @@
     "updatedBy": "{date} por {email}",
     "empty": "Aún no hay feature flags.",
     "toggle": "{flag} en {platform}",
-    "updateFailed": "No se pudo actualizar el flag"
+    "updateFailed": "No se pudo actualizar el flag",
+    "descriptions": {
+      "tiktok_publishing": "Conexión y publicación en TikTok. Desactivada, TikTok aparece como pausado con un aviso breve. Actívala cuando se apruebe la auditoría de Direct Post de TikTok.",
+      "workflows": "Serie, tema, resumen y tráiler, además de instrucciones y ajustes avanzados. La variable WORKFLOWS_ACCESS también debe permitirlos."
+    }
   }
 }

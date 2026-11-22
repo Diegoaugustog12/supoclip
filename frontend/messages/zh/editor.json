@@ -121,7 +121,12 @@
     "center": "将主体居中",
     "landscapeHint": "此片段包含横向细节。横屏版本可完整保留内容，方便阅读。",
     "useLandscape": "使用横屏版本",
-    "autoLayout": "生成的布局"
+    "autoLayout": "生成的布局",
+    "layoutTitle": "布局",
+    "layoutBody": "9:16 画面的构成方式。更改只会重做画面：剪辑、字幕和 B-roll 都会保留。",
+    "layoutApply": "应用布局",
+    "layoutWorking": "正在重建…",
+    "layoutFailed": "无法更改布局"
   },
   "audioPanel": {
     "title": "音频",

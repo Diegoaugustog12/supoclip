@@ -5,6 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import { getAuthTrustedOrigins } from "@/lib/auth-origins";
 import { prepareAccountDeletion } from "@/server/account-deletion";
 import { fetchBackend } from "@/server/backend-api";
+import { openAccessEnabled, openAccessSession } from "@/server/open-access";
 
 const disableSignUp = ["1", "true", "yes"].includes(
   (process.env.DISABLE_SIGN_UP ?? "").toLowerCase()
@@ -34,7 +35,7 @@ const trustedOrigins = getAuthTrustedOrigins({
   NEXT_PUBLIC_SELF_HOST: process.env.NEXT_PUBLIC_SELF_HOST,
 });
 
-export const auth = betterAuth({
+const baseAuth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -87,4 +88,13 @@ export const auth = betterAuth({
   ],
 });
 
-export type Session = typeof auth.$Infer.Session;
+// With REQUIRE_LOGIN=false a request without a session acts as the instance's
+// single account, so every route that asks for a session keeps working.
+const getSession = (async (context: Parameters<typeof baseAuth.api.getSession>[0]) => {
+  const session = await baseAuth.api.getSession(context);
+  return session ?? (openAccessEnabled() ? await openAccessSession() : null);
+}) as typeof baseAuth.api.getSession;
+
+export const auth = { ...baseAuth, api: { ...baseAuth.api, getSession } };
+
+export type Session = typeof baseAuth.$Infer.Session;

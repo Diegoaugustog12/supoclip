@@ -21,6 +21,7 @@ from .apify_youtube_downloader import ApifyDownloadError, download_video_via_api
 from .config import get_config
 from .download_progress import DownloadRecovery, report_download_recovery
 from .media.ffmpeg import ffprobe_video_size
+from .youtube_cookies import with_cookies
 from .youtube_proxy import (
     YOUTUBE_DOWNLOAD_PROVIDER_YTDLP_PROXY,
     ByteBudget,
@@ -134,7 +135,7 @@ def _build_info_options(task_id: Optional[str] = None) -> Dict[str, Any]:
         ydl_opts.update(base_proxy_params(task_id))
         ydl_opts["skip_download"] = True
         ydl_opts["quiet"] = True
-    return ydl_opts
+    return with_cookies(ydl_opts)
 
 
 def _empty_video_info(video_id: Optional[str] = None) -> Dict[str, Any]:
@@ -342,6 +343,7 @@ def _fetch_video_info_with_ytdlp(
         "resolution": info.get("resolution"),
         "fps": info.get("fps"),
         "filesize": info.get("filesize"),
+        "heatmap": info.get("heatmap"),
     }
 
 
@@ -620,8 +622,10 @@ def _download_youtube_video_with_ytdlp(
         try:
             logger.info("Download attempt %s/%s", attempt + 1, max_retries)
 
-            ydl_opts = downloader.get_optimal_download_options(
-                video_id, int(quality) if quality else None
+            ydl_opts = with_cookies(
+                downloader.get_optimal_download_options(
+                    video_id, int(quality) if quality else None
+                )
             )
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -755,7 +759,7 @@ def download_youtube_video(
     _remove_cached_downloads(downloader.temp_dir, video_id)
 
     config = get_config()
-    job_budget = budget or ByteBudget(getattr(config, "youtube_download_max_bytes", 2_000_000_000))
+    job_budget = budget or ByteBudget(getattr(config, "youtube_download_max_bytes", 20_000_000_000))
     geo_error: Optional[BaseException] = None
     attempted_providers = 0
 
@@ -976,3 +980,37 @@ def cleanup_downloaded_files(video_id: str, source_path: Optional[Path] = None):
 def extract_video_id(url: str) -> Optional[str]:
     """Backward compatibility wrapper."""
     return get_youtube_video_id(url)
+
+
+def purge_youtube_media(video_id: str) -> int:
+    """Delete every local file kept for a YouTube video; returns files removed.
+
+    Covers the reusable ``youtube-cache`` store, the full download, partial
+    ``.part`` files, the transcript sidecar and per-provider attempt folders.
+    """
+    import shutil
+
+    from .youtube_source import cache_dir_for
+
+    if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id or ""):
+        return 0
+    temp_dir = Path(get_config().temp_dir)
+    targets = [cache_dir_for(video_id)]
+    targets += list(temp_dir.glob(f"{video_id}.*"))
+    for prefix in ("apify", "rapidapi", "proxy"):
+        targets += list(temp_dir.glob(f"{prefix}-{video_id}-*"))
+    removed = 0
+    for target in targets:
+        try:
+            resolved = target.resolve()
+            if resolved == temp_dir.resolve() or not resolved.is_relative_to(temp_dir.resolve()):
+                continue
+            if target.is_dir():
+                shutil.rmtree(target, ignore_errors=True)
+                removed += 1
+            elif target.exists():
+                target.unlink()
+                removed += 1
+        except OSError as exc:
+            logger.warning("Could not remove %s: %s", target, exc)
+    return removed

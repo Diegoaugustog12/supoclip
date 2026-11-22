@@ -75,6 +75,16 @@ def youtube_download_failure(errors: list[str]) -> str:
     return f"{lead}. Retry later."
 
 
+def read_editor_layout(directory: Path) -> dict | None:
+    """The layout chosen for this clip in the studio, if any."""
+    path = directory / "editor_layout.json"
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
 def read_state(directory: Path):
     path = directory / "asset.json"
     if not path.exists():
@@ -227,7 +237,7 @@ def generated_emphasis(words: list[dict], task: dict) -> set[int]:
 
 
 # Layouts that are a composed frame, not a crop the editor can rebuild.
-PRESERVED_LAYOUT_KINDS = frozenset({"split", "stack", "reaction", "overlap"})
+PRESERVED_LAYOUT_KINDS = frozenset({"split", "stack", "reaction", "overlap", "custom"})
 
 
 def editor_preserved_layout(
@@ -506,6 +516,14 @@ async def prepare_editor(ctx, task_id: str, clip_id: str, filename: str):
                 await run_in_thread(storage.local_path, cache["video_path"]) if cache and cache.get("video_path") else None
             )
             source_settings = await service._load_task_source_settings(task_id)
+            # The layout picked for this clip in the studio wins over the task's.
+            chosen = read_editor_layout(directory)
+            if chosen:
+                from ..media.layout_choice import bind_layout
+
+                bind_layout(chosen.get("layout"), chosen.get("layout_spec"))
+            else:
+                await service._bind_task_layout(task_id)
             caption_path = await run_in_thread(storage.local_path, clip["file_path"], metadata_only=True)
             caption_settings = load_clip_caption_settings(caption_path) or {}
             from ..clip_source_map import load_clip_broll
@@ -590,6 +608,9 @@ async def prepare_editor(ctx, task_id: str, clip_id: str, filename: str):
             # vertical or original crop. Bake that frame into the editor
             # source so preview and export show it. Other clips keep this
             # uncropped trim and the crop chosen below.
+            # A layout left from an earlier choice must not outlive this render.
+            (directory / "layout.mp4").unlink(missing_ok=True)
+            (directory / "layout.json").unlink(missing_ok=True)
             if output_format in {"vertical", "vertical_split"}:
                 await run_in_thread(
                     bake_editor_layout, clean, output_format, source, local_ranges, True

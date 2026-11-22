@@ -2,6 +2,7 @@
 Task service - orchestrates task creation and processing workflow.
 """
 
+from sqlalchemy import text as sa_text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from subprocess import SubprocessError
@@ -36,7 +37,7 @@ from .task_completion_email_service import (
     TaskCompletionRecipient,
 )
 from ..config import Config, get_config
-from ..youtube_utils import cleanup_downloaded_files, extract_video_id
+from ..youtube_utils import cleanup_downloaded_files, extract_video_id, purge_youtube_media
 from ..youtube_proxy import YouTubeGeoRestrictedError
 from ..youtube_source import load_time_map, localize_segment, restore_clip_timeline, transcript_source_for
 from ..clip_cleanup import normalize_clip_cleanup_settings
@@ -461,18 +462,6 @@ class TaskService(ClipEditingMixin):
             )
         except Exception as exc:  # the worker can still resolve everything itself
             logger.warning("Could not seed stream source details: %s", exc)
-
-    async def _bind_task_layout(self, task_id: str) -> str:
-        """Make the layout chosen at creation the one the renderer uses.
-
-        ``get_task_by_id`` does not return ``source_metadata``, so it is loaded
-        explicitly. Always binds (``auto`` when none), so a job never inherits
-        the previous job's choice.
-        """
-        from ..media.layout_choice import bind_layout
-
-        metadata = await self.task_repo.load_source_metadata(self.db, task_id)
-        return bind_layout(metadata.get("layout") if isinstance(metadata, dict) else None)
 
     @exclusive_task_run
     @media_work
@@ -1212,7 +1201,29 @@ class TaskService(ClipEditingMixin):
         # Delete the task
         await self.task_repo.delete_task(self.db, task_id)
 
+        await self._purge_unused_youtube_media(source_url)
+
         logger.info(f"Deleted task {task_id} and all associated clips")
+
+    async def _purge_unused_youtube_media(self, source_url: Optional[str]) -> None:
+        """Free the disk used by a YouTube source once no task still uses it."""
+        video_id = extract_video_id(source_url) if source_url else None
+        if not video_id:
+            return
+        try:
+            result = await self.db.execute(
+                sa_text(
+                    "SELECT COUNT(*) FROM tasks t JOIN sources s ON s.id = t.source_id "
+                    "WHERE s.url LIKE :pattern"
+                ),
+                {"pattern": f"%{video_id}%"},
+            )
+            if result.scalar():
+                return  # another task still uses this video
+            removed = await run_in_thread(purge_youtube_media, video_id)
+            logger.info("Removed %s local file(s) for YouTube video %s", removed, video_id)
+        except Exception as exc:  # never fail the delete over disk cleanup
+            logger.warning("YouTube media cleanup failed for %s: %s", video_id, exc)
 
 
     async def get_performance_metrics(self) -> Dict[str, Any]:

@@ -44,7 +44,13 @@ def _build_engine(database_url: str) -> AsyncEngine:
         # busy. Killing it returns the connection to the pool instead of letting
         # it accumulate toward QueuePool exhaustion.
         connect_args={
-            "server_settings": {"idle_in_transaction_session_timeout": "300000"}
+            "server_settings": {
+                # The worker sets a longer value: a planning model call can run
+                # for minutes while its task session holds a transaction open.
+                "idle_in_transaction_session_timeout": os.getenv(
+                    "DB_IDLE_IN_TRANSACTION_TIMEOUT_MS", "300000"
+                ).strip() or "300000"
+            }
         },
     )
 

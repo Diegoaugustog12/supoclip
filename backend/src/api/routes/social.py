@@ -235,6 +235,34 @@ async def create_post(request: Request, db: AsyncSession = Depends(get_db)):
     return {"post": post}
 
 
+@router.post("/posts/batch")
+async def create_post_batch(request: Request, db: AsyncSession = Depends(get_db)):
+    """Schedule several clips of one task on one account, spaced by a fixed gap."""
+    user_id = await _allowed_user_id(request, db)
+    body = await _json_body(request)
+    for field in ("task_id", "social_account_id"):
+        if not body.get(field):
+            raise HTTPException(status_code=422, detail=f"{field} is required")
+    clip_ids = body.get("clip_ids")
+    if not isinstance(clip_ids, list) or not all(isinstance(item, str) for item in clip_ids):
+        raise HTTPException(status_code=422, detail="clip_ids must be a list of clip ids")
+    interval = body.get("interval_minutes")
+    if isinstance(interval, bool) or not isinstance(interval, int):
+        raise HTTPException(status_code=422, detail="interval_minutes must be a whole number")
+    try:
+        return await _service(request, db).create_batch(
+            user_id,
+            task_id=str(body["task_id"]),
+            clip_ids=clip_ids,
+            social_account_id=str(body["social_account_id"]),
+            start=body.get("start"),
+            interval_minutes=interval,
+            privacy_level=body.get("privacy_level"),
+        )
+    except SocialError as exc:
+        raise _http_error(exc)
+
+
 @router.get("/performance")
 async def get_performance(request: Request, db: AsyncSession = Depends(get_db)):
     """Aggregate audience performance, grouped the same way the AI uses it."""

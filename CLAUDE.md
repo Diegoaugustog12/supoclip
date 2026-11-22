@@ -90,7 +90,7 @@ utils/               → Thread pool helpers for blocking operations (async_help
 
 1. **Input** → YouTube URL (yt-dlp) or uploaded file
 2. **Transcription** → AssemblyAI word-level timestamps (cached as `.transcript_cache.json`)
-3. **AI Analysis** → Pydantic AI selects viral segments (15-60s each) with virality scoring. Transcripts over 15 min are analysed in 12-min windows (2-min overlap, 3 concurrent), deduplicated, then reranked together in one comparative call (`RERANK_LLM`, default `LLM`); final count scales ~1 clip per 5 min, capped by `MAX_CLIPS` (default 10)
+3. **AI Analysis** → (YouTube's "Most replayed" graph, `info["heatmap"]` via yt-dlp, adds peak lines to the clip signals and a bounded rank bonus: `replay_heatmap.py`)  Pydantic AI selects viral segments (15-60s each) with virality scoring. Transcripts over 15 min are analysed in 12-min windows (2-min overlap, 3 concurrent), deduplicated, then reranked together in one comparative call (`RERANK_LLM`, default `LLM`); final count scales ~1 clip per 5 min, capped by `MAX_CLIPS` (default 10)
 4. **Clip Generation** → MoviePy creates 9:16 clips with:
    - Face-centered cropping: MediaPipe → OpenCV DNN → Haar cascade (fallback chain)
    - Word-synced subtitles from AssemblyAI
@@ -178,6 +178,7 @@ PostgreSQL 15. Schema in `init.sql`. Mixed naming conventions:
 - `GET /social/providers`, `GET /social/connections` — configured platforms and connected accounts
 - `POST /social/connections/{provider}/authorize` + `/callback` — OAuth handshake (session auth only)
 - `POST /social/posts` — publish or schedule a clip; `GET /social/posts?task_id=` — list with metrics
+- `POST /social/posts/batch` — schedule several clips of one task on one account, one every `interval_minutes` (15 min–7 days, max 20; `SocialService.create_batch`, UI: "Schedule selected" on the task page's selection bar)
 - `POST /social/posts/{id}/cancel|retry|refresh-metrics`, `DELETE /social/posts/{id}`
 - `GET /social/performance` — metrics by hook type / platform / clip length (also fed into the AI prompt)
 - `GET /social/performance/timeseries?days=30` — daily new views from metrics snapshots (Analytics chart)
@@ -269,7 +270,7 @@ RERANK_LLM=                          # Optional; model for the long-video candid
 YOUTUBE_DOWNLOAD_PROVIDER=yt_dlp     # yt_dlp | apify
 YOUTUBE_PROXY_URL=                   # Optional residential proxy template; empty = off
 YOUTUBE_POT_PROVIDER_URL=            # Optional bgutil base URL (http://bgutil:4416)
-YOUTUBE_DOWNLOAD_MAX_BYTES=2000000000
+YOUTUBE_DOWNLOAD_MAX_BYTES=20000000000
 YOUTUBE_MAX_HEIGHT=1080              # Hard cap; lower values are honored
 APIFY_EXPENSIVE_FALLBACKS=false      # Skip high-cap Apify fallback actors
 
@@ -347,6 +348,17 @@ Personalized analyses skip the shared `processing_cache` analysis entry.
   Instagram only app testers until Meta review, and YouTube uploads from an unaudited project stay
   private. Provider app IDs and setup notes are in `docs/configuration.md`.
 
+### Automations (followed channels)
+
+`/automations` (nav "Automações"): the user follows YouTube, Twitch and Kick channels (`channel_watches`, max 10; platform comes from the URL host, `platform_of`). Worker cron
+`check_channel_watches` (every 5 min, each channel at most every 10) reads YouTube `/videos` and `/streams` (Twitch: past broadcasts; Kick: `/videos`) with yt-dlp
+`extract_flat` (`channel_watch.fetch_latest`; live and upcoming are skipped until they end). Videos already there at
+follow time are stored as `baseline`; later ones become `pending` rows in `channel_discoveries`. **Nothing is clipped
+or posted without approval:** the page's "Cortar" button creates a normal task through `/api/tasks/create` (same
+billing and limits), then records it with `POST /automations/discoveries/{id}/approve`. `allows_clips` is the user's
+own note that the owner permits clips; clipping a channel without it asks for confirmation. Routes in
+`api/routes/automations.py`, proxied by `app/api/automations/[...path]`.
+
 ### Clip studio (editor)
 
 Full-screen, classic NLE layout at `/tasks/{id}/edit` (`frontend/src/components/editor/`): clip picker in the header, viewer and
@@ -360,11 +372,13 @@ AI worker → Claude Sonnet 5.5 returns typed operations (`keep_ranges`, `remove
 `apply_plan` clamps and validates → the browser applies the result as one undoable change (never over edits made
 meanwhile). Keep the output schema free of optional fields: the API rejects schemas whose grammar is too large.
 
-### Workflows (series, topic clips, recap, trailer)
+### Workflows (series, topic clips, subjects, recap, trailer)
 
 `tasks.workflow` picks what a task makes: `highlights` (default, unchanged), `series` (Part 1..N of one
 story, adjacent parts share one exact cut), `topic` (every strong moment about `workflow_options.topic`),
-`recap` (one clip of the main points) or `trailer` (one teaser that never reveals the payoff). Free-text
+`recap` (one clip of the main points), `trailer` (one teaser that never reveals the payoff) or `subjects`
+(one compilation per recurring subject at its original length; `POST /tasks/{id}/clips/{clip_id}/shorten` makes
+a 15/30/60/120 s copy from its stored beats). Free-text
 `instructions` steer any workflow. Code lives in `backend/src/workflows/`; full design in `docs/workflows.md`.
 
 - **Units, not timestamps:** the transcript becomes numbered sentence units (clauses for trailers); the model

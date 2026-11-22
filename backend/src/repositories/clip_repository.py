@@ -41,7 +41,19 @@ async def _execute_newest_supported(
 
 
 def _workflow_meta(value: Any) -> Dict[str, Any]:
-    return value if isinstance(value, dict) else {}
+    if not isinstance(value, dict):
+        return {}
+    moments = value.get("moments")
+    if value.get("subject") and isinstance(moments, list) and not value.get("shortened_to"):
+        # Subject compilations always carry a current suggestion for "Shorten", including
+        # the ones planned before it existed (it is derived from the beats, never stored).
+        from ..workflows.subjects import recommend_shorten
+
+        recommended = recommend_shorten(moments, str(value.get("style") or "auto"))
+        value = {key: item for key, item in value.items() if key != "recommended_shorten"}
+        if recommended:
+            value["recommended_shorten"] = recommended
+    return value
 
 
 _CLIP_COLUMNS = """id, task_id, filename, file_path, start_time, end_time, duration,

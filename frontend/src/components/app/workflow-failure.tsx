@@ -17,7 +17,7 @@ import {
 } from "@/lib/workflows";
 
 export const WORKFLOW_ERROR_CODES: readonly WorkflowErrorCode[] = [
-  "source_too_short", "no_story", "topic_not_found", "recap_unsupported", "trailer_unbuildable",
+  "source_too_short", "no_story", "topic_not_found", "subjects_not_found", "recap_unsupported", "trailer_unbuildable",
   "analysis_incomplete", "plan_failed", "render_incomplete", "transcript_untimed",
 ];
 
@@ -78,6 +78,7 @@ const LENGTH_SCOPE: Record<Workflow, "clip" | "part" | "total"> = {
   series: "part",
   recap: "total",
   trailer: "total",
+  subjects: "total",
 };
 
 /**

@@ -376,3 +376,32 @@ LLM_SCHEMAS: tuple[type[BaseModel], ...] = (
     ButtonPick,
     SpoilerVerdict,
 )
+
+
+# -- subjects ------------------------------------------------------------------
+
+
+class SubjectDef(BaseModel):
+    label: str = Field(description="2-5 words naming the subject, in the video's language")
+    description: str = Field(description="One sentence: what kind of moment belongs to this subject")
+    keywords: list[str] = Field(description="3-8 words or phrases that signal it, may be empty")
+    virality: int = Field(description="0-100: how likely a compilation of this subject is to be watched to the end and shared")
+
+
+class SubjectDiscovery(BaseModel):
+    notes: str = Field(description="Think first, at most 80 words: which subjects come back and where")
+    subjects: list[SubjectDef] = Field(description="3-10 subjects that each come up at least twice")
+
+
+class SubjectMoment(BaseModel):
+    subject: int = Field(description="Subject number from the list, starting at 1")
+    first_unit: int
+    last_unit: int
+    strength: int = Field(description="0-100: how clearly and how strongly this moment is that subject")
+    title: str = Field(description="3-9 words naming what happens in this moment")
+    why: str = Field(description="At most 15 words")
+
+
+class SubjectExtraction(BaseModel):
+    window_notes: str = Field(description="Think first, at most 80 words")
+    moments: list[SubjectMoment]

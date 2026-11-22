@@ -18,6 +18,7 @@ from ..config import get_config
 from .contracts import WORKFLOWS, WorkflowOptions, WorkflowSpec
 from .durations import (
     MIN_SOURCE_SECONDS,
+    SHORTEN_CHOICES,
     SERIES_MAX_PARTS,
     SERIES_MIN_PARTS,
     SERIES_SOURCE_HEADROOM,
@@ -117,7 +118,7 @@ def parse_workflow_request(data: dict, clip_length: str) -> WorkflowSpec:
     if not isinstance(workflow, str) or workflow not in WORKFLOWS:
         raise WorkflowRequestError(
             "INVALID_WORKFLOW",
-            "Unknown workflow. Use highlights, series, topic, recap or trailer.",
+            "Unknown workflow. Use highlights, series, topic, recap, trailer or subjects.",
         )
 
     raw_options = data.get("workflow_options")
@@ -165,6 +166,7 @@ def _source_minimum_message(workflow: str) -> str:
         "recap": "This video is already short. Recaps work on videos over 3 minutes.",
         "trailer": "Trailers work on videos over 3 minutes.",
         "topic": "This video is too short to search by topic. Try Highlights instead.",
+        "subjects": "Subjects work on longer videos, over 5 minutes. Try Highlights instead.",
     }[workflow]
 
 
@@ -322,6 +324,7 @@ def workflows_info(allowed: frozenset[str]) -> dict[str, Any]:
             entry("topic"),
             entry("recap", lengths=recap_lengths()),
             entry("trailer", lengths=trailer_lengths()),
+            entry("subjects", shorten_choices=list(SHORTEN_CHOICES)),
         ],
         "topic_max_chars": TOPIC_MAX_CHARS,
         "instructions_max_chars": INSTRUCTIONS_MAX_CHARS,

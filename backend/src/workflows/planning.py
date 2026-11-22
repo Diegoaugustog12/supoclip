@@ -33,6 +33,14 @@ def plan_language(index: UnitIndex, transcript_data: Optional[dict], outline_lan
 # Settings the prompts must know about, said the way a creator would.
 _SETTING_WISHES = (
     ("series", "endings", "natural", "End each part where a thought is complete. Don't chase cliffhangers or question endings."),
+    ("subjects", "style", "humor", "Edit for comedy. Pick subjects and beats that are funny: punchlines, running jokes, roasts, "
+     "failed boasts, absurd reactions, awkward pauses. Keep the setup and the reaction, cut dead stretches."),
+    ("subjects", "style", "drama", "Edit for tension and emotion. Pick subjects and beats with conflict, stakes, confessions, "
+     "reversals and emotional peaks. Keep the build-up, not just the peak."),
+    ("subjects", "style", "hype", "Edit for energy. Pick subjects and beats with excitement, big wins, clutch plays, shouting and "
+     "fast reactions. Favour momentum over explanation."),
+    ("subjects", "style", "educational", "Edit for clarity. Pick subjects and beats that teach something: a clear claim, an example, "
+     "a surprising fact or a practical tip, each understandable on its own."),
     ("trailer", "ending", "question", "The trailer must end on a question."),
     ("trailer", "spoilers", "relaxed", "You may use lines that give the ending away when they make the strongest trailer."),
 )

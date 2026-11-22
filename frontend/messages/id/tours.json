@@ -46,5 +46,11 @@
       "body": "Durasi, teks, pembingkaian, pembersihan, dan B-roll kini ada dalam satu menu. Kami mengingat pilihanmu, jadi cukup diatur sekali."
     }
   },
+  "subjects": {
+    "subjects": {
+      "title": "Baru: Topik",
+      "body": "Pilih Topik untuk memecah video panjang berdasarkan hal yang terus muncul, seperti setiap kali seseorang kesal atau lelucon yang berulang. Anda mendapat satu potongan per topik dengan durasi asli, lalu bisa memendekkannya menjadi 15 dtk, 30 dtk, 1 atau 2 menit."
+    }
+  },
   "skip": "Lewati"
 }

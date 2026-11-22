@@ -609,6 +609,15 @@ def create_clips_from_segments(
 
             if success:
                 from .media.ffmpeg import output_offsets_for_ranges
+                from .media.sfx import apply_sfx, sfx_cues
+
+                # Styled subject clips (humor, hype) get sound effects between and after their beats.
+                cues = sfx_cues(
+                    segment.get("workflow_meta"), keep_ranges,
+                    output_offsets or output_offsets_for_ranges(keep_ranges),
+                )
+                if cues and apply_sfx(clip_path, cues):
+                    layout_report["sfx_applied"] = len(cues)
                 save_clip_source_ranges(
                     clip_path, keep_ranges, output_offsets or output_offsets_for_ranges(keep_ranges)
                 )

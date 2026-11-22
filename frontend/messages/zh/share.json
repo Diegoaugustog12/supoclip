@@ -14,7 +14,8 @@
     "series": "系列 · {count, plural, one {# 集} other {# 集}}",
     "topic": "话题：{topic}",
     "recap": "回顾",
-    "trailer": "预告"
+    "trailer": "预告",
+    "subjects": "按主题"
   },
   "partLabel": "第 {n} 集",
   "totalDuration": "共 {duration}"

@@ -52,6 +52,7 @@ const workflowsInfo = {
       { key: "endings", type: "enum", default: "cliffhanger", choices: ["cliffhanger", "natural"] },
     ], part_count: { min: 2, max: 10 }, lengths: { auto: [45, 150], short: [30, 60], medium: [45, 90], long: [90, 175] } },
     { id: "topic", available: true, min_source_seconds: 60 },
+    { id: "subjects", available: true, min_source_seconds: 300 },
     { id: "recap", available: true, min_source_seconds: 180, lengths: { auto: null, short: 45, medium: 75, long: 120 } },
     { id: "trailer", available: true, min_source_seconds: 180, lengths: { auto: 30, short: 20, medium: 40, long: 60 } },
   ],
@@ -739,7 +740,7 @@ describe("when workflows are enabled", () => {
 
   it("labels every workflow's card and button", async () => {
     await renderHome();
-    const buttons = { highlights: "Generate clips", series: "Generate series", topic: "Find moments", recap: "Make recap", trailer: "Make trailer" };
+    const buttons = { highlights: "Generate clips", series: "Generate series", topic: "Find moments", recap: "Make recap", trailer: "Make trailer", subjects: "Find subjects" };
     for (const workflow of WORKFLOWS) {
       pick(new RegExp(workflow, "i"));
       expect(screen.getByRole("button", { name: buttons[workflow] })).toBeInTheDocument();

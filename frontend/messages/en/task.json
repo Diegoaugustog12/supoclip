@@ -18,7 +18,8 @@
   "toasts": {
     "settingsApplied": "Generation settings applied",
     "cancelled": "Generation cancelled",
-    "retryQueued": "Generation retry queued"
+    "retryQueued": "Generation retry queued",
+    "shortened": "Shorter version ready"
   },
   "hooks": {
     "question": "Question Hook",
@@ -147,6 +148,7 @@
     "topic": "Topic: {topic}",
     "recap": "Recap",
     "trailer": "Trailer",
+    "subjects": "By subject",
     "seriesPending": "Series"
   },
   "partOf": "Part {n} of {total}",
@@ -174,6 +176,19 @@
   "sourceMoments": "Source moments",
   "playFrom": "Play from {time}",
   "topicHeader": "About {topic} · {count, plural, one {# moment} other {# moments}}",
+  "subjectsHeader": "{count, plural, one {# subject} other {# subjects}}",
+  "subjectsHint": "Each cut gathers every moment of one subject at its original length. Shorten it whenever you need.",
+  "subjectVersions": "Shorter versions",
+  "subjectUpTo": "Up to {length}",
+  "subjectRecommended": "Recommended",
+  "selectClip": "Select {title}",
+  "selectedCount": "{count} selected",
+  "downloadSelected": "Download selected",
+  "clearSelection": "Clear selection",
+  "subjectMoments": "{count, plural, one {# moment} other {# moments}}",
+  "subjectDownloadOriginal": "Download original",
+  "shorten": "Shorten",
+  "shortenNamed": "Shorten {title}",
   "instructionsUsed": "Instructions",
   "stepsByWorkflow": {
     "series": {
@@ -191,6 +206,10 @@
     "trailer": {
       "finding": "Writing the trailer",
       "rendering": "Editing your trailer"
+    },
+    "subjects": {
+      "finding": "Finding the subjects",
+      "rendering": "Editing each subject"
     }
   },
   "workflowNotes": {
@@ -213,6 +232,11 @@
       "mentions": "Mentioned in passing at {times}.",
       "cta": "Make highlights instead"
     },
+    "subjects_not_found": {
+      "title": "No subject comes back often enough",
+      "body": "We couldn't gather enough moments of one subject to make a cut. Your minutes were refunded.",
+      "cta": "Make highlights instead"
+    },
     "source_too_short": {
       "series": {
         "title": "This video is too short for a series",
@@ -229,6 +253,10 @@
       "trailer": {
         "title": "This video is too short for a trailer",
         "body": "Trailers work on videos over 3 minutes long. Your minutes were refunded."
+      },
+      "subjects": {
+        "title": "This video is too short for subjects",
+        "body": "Subjects work on videos over 5 minutes long. Your minutes were refunded."
       },
       "cta": "Make highlights instead"
     },
@@ -298,6 +326,12 @@
     "error": "Could not write it right now. Try again.",
     "copyText": "Copy text",
     "copyTags": "Copy hashtags",
-    "copyAll": "Copy all"
-  }
+    "copyAll": "Copy all",
+    "chars": "{count} characters",
+    "trending": "Hashtags trending on YouTube for this subject",
+    "loadingHint": "Writing the description. This can take a few seconds.",
+    "hooks": "Alternative hooks",
+    "copyHook": "Copy"
+  },
+  "scheduleSelected": "Schedule selected"
 }

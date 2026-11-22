@@ -18,7 +18,8 @@
   "toasts": {
     "settingsApplied": "Pengaturan generasi diterapkan",
     "cancelled": "Generasi dibatalkan",
-    "retryQueued": "Pembuatan masuk antrean untuk dicoba lagi"
+    "retryQueued": "Pembuatan masuk antrean untuk dicoba lagi",
+    "shortened": "Versi lebih pendek siap"
   },
   "hooks": {
     "question": "Hook pertanyaan",
@@ -147,6 +148,7 @@
     "topic": "Topik: {topic}",
     "recap": "Ringkasan",
     "trailer": "Trailer",
+    "subjects": "Per topik",
     "seriesPending": "Seri"
   },
   "partOf": "Bagian {n} dari {total}",
@@ -174,6 +176,19 @@
   "sourceMoments": "Momen di video asli",
   "playFrom": "Putar dari {time}",
   "topicHeader": "Tentang {topic} · {count, plural, one {# momen} other {# momen}}",
+  "subjectsHeader": "{count, plural, other {# topik}}",
+  "subjectsHint": "Setiap potongan mengumpulkan semua momen satu topik dengan durasi aslinya. Pendekkan kapan saja.",
+  "subjectVersions": "Versi lebih pendek",
+  "subjectUpTo": "Hingga {length}",
+  "subjectRecommended": "Disarankan",
+  "selectClip": "Pilih {title}",
+  "selectedCount": "{count} dipilih",
+  "downloadSelected": "Unduh yang dipilih",
+  "clearSelection": "Hapus pilihan",
+  "subjectMoments": "{count, plural, other {# momen}}",
+  "subjectDownloadOriginal": "Unduh asli",
+  "shorten": "Pendekkan",
+  "shortenNamed": "Pendekkan {title}",
   "instructionsUsed": "Instruksi",
   "stepsByWorkflow": {
     "series": {
@@ -191,6 +206,10 @@
     "trailer": {
       "finding": "Menulis trailer",
       "rendering": "Mengedit trailermu"
+    },
+    "subjects": {
+      "finding": "Mencari topik",
+      "rendering": "Mengedit tiap topik"
     }
   },
   "workflowNotes": {
@@ -213,6 +232,11 @@
       "mentions": "Disebut sekilas di {times}.",
       "cta": "Buat highlight saja"
     },
+    "subjects_not_found": {
+      "title": "Tidak ada topik yang cukup sering muncul",
+      "body": "Kami tidak bisa mengumpulkan cukup momen dari satu topik untuk dibuat potongan. Menit Anda dikembalikan.",
+      "cta": "Buat sorotan saja"
+    },
     "source_too_short": {
       "series": {
         "title": "Video ini terlalu pendek untuk dijadikan seri",
@@ -229,6 +253,10 @@
       "trailer": {
         "title": "Video ini terlalu pendek untuk dijadikan trailer",
         "body": "Trailer cocok untuk video lebih dari 3 menit. Menit kamu sudah dikembalikan."
+      },
+      "subjects": {
+        "title": "Video ini terlalu pendek untuk topik",
+        "body": "Topik berfungsi pada video lebih dari 5 menit. Menit Anda dikembalikan."
       },
       "cta": "Buat highlight saja"
     },
@@ -298,6 +326,12 @@
     "error": "Belum bisa dibuat sekarang. Coba lagi.",
     "copyText": "Salin teks",
     "copyTags": "Salin hashtag",
-    "copyAll": "Salin semua"
-  }
+    "copyAll": "Salin semua",
+    "chars": "{count} karakter",
+    "trending": "Hashtag yang sedang tren di YouTube untuk topik ini",
+    "loadingHint": "Menulis deskripsi. Ini bisa memakan waktu beberapa detik.",
+    "hooks": "Hook alternatif",
+    "copyHook": "Salin"
+  },
+  "scheduleSelected": "Jadwalkan yang dipilih"
 }

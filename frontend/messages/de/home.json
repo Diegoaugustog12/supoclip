@@ -168,6 +168,10 @@
     "trailer": {
       "label": "Trailer",
       "hint": "Eine kurze Vorschau, die Lust auf das ganze Video macht"
+    },
+    "subjects": {
+      "label": "Themen",
+      "hint": "Ein Schnitt pro wiederkehrendem Thema"
     }
   },
   "subtitleByWorkflow": {
@@ -175,14 +179,16 @@
     "series": "Wirf ein langes Video rein. Hol dir eine nummerierte Serie, bei der die Leute dranbleiben.",
     "topic": "Wirf ein langes Video rein. Hol dir jeden starken Moment zu deinem Thema.",
     "recap": "Wirf ein langes Video rein. Hol dir ein kurzes Video mit den wichtigsten Punkten.",
-    "trailer": "Wirf ein langes Video rein. Hol dir eine kurze Vorschau, die Lust aufs ganze Video macht."
+    "trailer": "Wirf ein langes Video rein. Hol dir eine kurze Vorschau, die Lust aufs ganze Video macht.",
+    "subjects": "Lade ein langes Video hoch. Du erhältst einen Schnitt für jedes Thema, das immer wiederkehrt."
   },
   "generateByWorkflow": {
     "highlights": "Clips erzeugen",
     "series": "Serie erzeugen",
     "topic": "Momente finden",
     "recap": "Zusammenfassung erstellen",
-    "trailer": "Trailer erstellen"
+    "trailer": "Trailer erstellen",
+    "subjects": "Themen finden"
   },
   "topic": {
     "placeholder": "Welches Thema? z. B. ein Unternehmen aufbauen",
@@ -231,7 +237,8 @@
       "series": "Etwas Bestimmtes? z. B. Fokus auf die Geschichte vom ersten Startup",
       "topic": "Etwas Bestimmtes? z. B. nur praktische Tipps, keine persönlichen Geschichten",
       "recap": "Etwas Bestimmtes? z. B. Fokus auf die Geldtipps",
-      "trailer": "Etwas Bestimmtes? z. B. geheimnisvoll halten, Fokus auf den Konflikt"
+      "trailer": "Etwas Bestimmtes? z. B. geheimnisvoll halten, Fokus auf den Konflikt",
+      "subjects": "Etwas Bestimmtes? z. B. ohne Intro, nur die lustigen Themen"
     }
   },
   "urlRescue": {
@@ -245,13 +252,15 @@
     "seriesCount": "Lieber eine Serie in {count} Teilen?",
     "topic": "Lieber jeden Moment zu „{topic}“ finden?",
     "recap": "Lieber eine Zusammenfassung?",
-    "trailer": "Lieber einen Trailer?"
+    "trailer": "Lieber einen Trailer?",
+    "subjects": "Wie wäre ein Schnitt pro Thema?"
   },
   "tooShort": {
     "series": "Dieses Video ist {duration} lang. Eine Serie braucht mindestens 2 Minuten. Highlights passen hier super.",
     "recap": "Dieses Video ist {duration} lang. Zusammenfassungen funktionieren bei Videos über 3 Minuten.",
     "trailer": "Dieses Video ist {duration} lang. Trailer funktionieren bei Videos über 3 Minuten.",
     "topic": "Dieses Video ist {duration} lang. Die Themensuche braucht mindestens 1 Minute.",
+    "subjects": "Dieses Video ist {duration} lang. Themen funktionieren bei Videos über 5 Minuten.",
     "useHighlights": "Highlights nehmen"
   },
   "workflowErrors": {
@@ -266,6 +275,7 @@
     "SOURCE_TOO_SHORT_FOR_RECAP": "Dieses Video ist schon kurz. Zusammenfassungen funktionieren bei Videos über 3 Minuten.",
     "SOURCE_TOO_SHORT_FOR_TRAILER": "Trailer funktionieren bei Videos über 3 Minuten.",
     "SOURCE_TOO_SHORT_FOR_TOPIC": "Dieses Video ist zu kurz für eine Themensuche. Probier stattdessen Highlights.",
+    "SOURCE_TOO_SHORT_FOR_SUBJECTS": "Themen funktionieren bei Videos über 5 Minuten. Probiere Highlights.",
     "WORKFLOW_NOT_AVAILABLE": "Diese Option ist für dein Konto noch nicht verfügbar.",
     "INVALID_WORKFLOW_SETTING": "Diese erweiterte Einstellung wird nicht unterstützt."
   },
@@ -273,7 +283,8 @@
     "series": "Neue Serie",
     "topic": "Neue Themensuche",
     "recap": "Neue Zusammenfassung",
-    "trailer": "Neuer Trailer"
+    "trailer": "Neuer Trailer",
+    "subjects": "Neue Themen"
   },
   "advanced": {
     "chip": "Erweitert",
@@ -290,6 +301,10 @@
       "junction_style": {
         "label": "Schnitte zwischen Abschnitten",
         "hint": "Wie die Teile eines Clips verbunden werden."
+      },
+      "style": {
+        "label": "Schnittstil",
+        "hint": "Welche Art von Momenten gesucht wird."
       },
       "cold_open": {
         "label": "Cold Open",
@@ -349,6 +364,10 @@
       "broad": "Ähnliche Treffer erlauben",
       "strict": "Nur das genaue Thema",
       "relaxed": "Erlaubt",
+      "humor": "Comedy",
+      "drama": "Drama",
+      "hype": "Hohe Energie",
+      "educational": "Lehrreich",
       "question": "Eine Frage"
     }
   }

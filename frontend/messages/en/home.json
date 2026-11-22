@@ -168,6 +168,10 @@
     "trailer": {
       "label": "Trailer",
       "hint": "One short preview that makes people watch the full video"
+    },
+    "subjects": {
+      "label": "Subjects",
+      "hint": "One cut per recurring subject"
     }
   },
   "subtitleByWorkflow": {
@@ -175,14 +179,16 @@
     "series": "Drop in a long video. Get back a numbered series that keeps people watching.",
     "topic": "Drop in a long video. Get back every strong moment about your topic.",
     "recap": "Drop in a long video. Get back one short video with the main points.",
-    "trailer": "Drop in a long video. Get back a short preview that makes people want the whole thing."
+    "trailer": "Drop in a long video. Get back a short preview that makes people want the whole thing.",
+    "subjects": "Drop a long video. Get one cut for each subject that keeps coming back."
   },
   "generateByWorkflow": {
     "highlights": "Generate clips",
     "series": "Generate series",
     "topic": "Find moments",
     "recap": "Make recap",
-    "trailer": "Make trailer"
+    "trailer": "Make trailer",
+    "subjects": "Find subjects"
   },
   "topic": {
     "placeholder": "What topic? e.g. building a business",
@@ -231,7 +237,8 @@
       "series": "Anything specific? e.g. focus on the story about the first startup",
       "topic": "Anything specific? e.g. practical advice only, no personal stories",
       "recap": "Anything specific? e.g. focus on the money advice",
-      "trailer": "Anything specific? e.g. keep it mysterious, focus on the conflict"
+      "trailer": "Anything specific? e.g. keep it mysterious, focus on the conflict",
+      "subjects": "Anything specific? e.g. skip the intro, only the funny subjects"
     }
   },
   "urlRescue": {
@@ -245,13 +252,15 @@
     "seriesCount": "Make a {count}-part series instead?",
     "topic": "Find every moment about “{topic}” instead?",
     "recap": "Make a recap instead?",
-    "trailer": "Make a trailer instead?"
+    "trailer": "Make a trailer instead?",
+    "subjects": "How about one cut per subject?"
   },
   "tooShort": {
     "series": "This video is {duration}. A series needs at least 2 minutes. Highlights works great here.",
     "recap": "This video is {duration}. Recaps work on videos over 3 minutes.",
     "trailer": "This video is {duration}. Trailers work on videos over 3 minutes.",
     "topic": "This video is {duration}. Topic search needs at least 1 minute.",
+    "subjects": "This video is {duration}. Subjects work on videos over 5 minutes.",
     "useHighlights": "Use Highlights"
   },
   "workflowErrors": {
@@ -266,6 +275,7 @@
     "SOURCE_TOO_SHORT_FOR_RECAP": "This video is already short. Recaps work on videos over 3 minutes.",
     "SOURCE_TOO_SHORT_FOR_TRAILER": "Trailers work on videos over 3 minutes.",
     "SOURCE_TOO_SHORT_FOR_TOPIC": "This video is too short to search by topic. Try Highlights instead.",
+    "SOURCE_TOO_SHORT_FOR_SUBJECTS": "Subjects work on videos over 5 minutes. Try Highlights.",
     "WORKFLOW_NOT_AVAILABLE": "This option isn't available on your account yet.",
     "INVALID_WORKFLOW_SETTING": "That advanced setting isn't supported."
   },
@@ -273,7 +283,8 @@
     "series": "New series",
     "topic": "New topic search",
     "recap": "New recap",
-    "trailer": "New trailer"
+    "trailer": "New trailer",
+    "subjects": "New subjects"
   },
   "advanced": {
     "chip": "Advanced",
@@ -290,6 +301,10 @@
       "junction_style": {
         "label": "Cuts between sections",
         "hint": "How the pieces of a clip join."
+      },
+      "style": {
+        "label": "Editing style",
+        "hint": "Which kind of moments to look for."
       },
       "cold_open": {
         "label": "Cold open",
@@ -349,6 +364,10 @@
       "broad": "Allow a close match",
       "strict": "Exact topic only",
       "relaxed": "Allowed",
+      "humor": "Comedy",
+      "drama": "Drama",
+      "hype": "High energy",
+      "educational": "Educational",
       "question": "A question"
     }
   }

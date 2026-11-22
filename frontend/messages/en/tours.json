@@ -46,5 +46,11 @@
       "body": "Length, captions, framing, cleanup, and B-roll are now in one menu. We remember your choices, so you only set them once."
     }
   },
+  "subjects": {
+    "subjects": {
+      "title": "New: Subjects",
+      "body": "Pick Subjects to split a long video by what keeps coming back, like every rage quit or every running joke. You get one cut per subject at its original length, and can shorten any of them to 15 s, 30 s, 1 or 2 min afterwards."
+    }
+  },
   "skip": "Skip"
 }

@@ -245,7 +245,7 @@ class Task(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "workflow IN ('highlights', 'series', 'topic', 'recap', 'trailer')",
+            "workflow IN ('highlights', 'series', 'topic', 'recap', 'trailer', 'subjects')",
             name="tasks_workflow_check",
         ),
         Index("idx_tasks_user_workflow", "user_id", "workflow"),

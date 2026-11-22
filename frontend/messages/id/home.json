@@ -168,6 +168,10 @@
     "trailer": {
       "label": "Trailer",
       "hint": "Satu cuplikan singkat yang bikin orang ingin menonton video lengkapnya"
+    },
+    "subjects": {
+      "label": "Topik",
+      "hint": "Satu potongan per topik yang berulang"
     }
   },
   "subtitleByWorkflow": {
@@ -175,14 +179,16 @@
     "series": "Masukkan video panjang. Dapatkan seri bernomor yang bikin penonton terus mengikuti.",
     "topic": "Masukkan video panjang. Dapatkan setiap momen kuat tentang topik kamu.",
     "recap": "Masukkan video panjang. Dapatkan satu video pendek berisi poin-poin utama.",
-    "trailer": "Masukkan video panjang. Dapatkan cuplikan singkat yang bikin orang ingin menonton semuanya."
+    "trailer": "Masukkan video panjang. Dapatkan cuplikan singkat yang bikin orang ingin menonton semuanya.",
+    "subjects": "Letakkan video panjang. Dapatkan satu potongan untuk setiap topik yang terus muncul."
   },
   "generateByWorkflow": {
     "highlights": "Buat clip",
     "series": "Buat seri",
     "topic": "Cari momen",
     "recap": "Buat ringkasan",
-    "trailer": "Buat trailer"
+    "trailer": "Buat trailer",
+    "subjects": "Pisahkan topik"
   },
   "topic": {
     "placeholder": "Topik apa? mis. membangun bisnis",
@@ -231,7 +237,8 @@
       "series": "Ada yang spesifik? mis. fokus pada cerita startup pertamanya",
       "topic": "Ada yang spesifik? mis. hanya saran praktis, tanpa cerita pribadi",
       "recap": "Ada yang spesifik? mis. fokus pada saran soal uang",
-      "trailer": "Ada yang spesifik? mis. buat misterius, fokus pada konfliknya"
+      "trailer": "Ada yang spesifik? mis. buat misterius, fokus pada konfliknya",
+      "subjects": "Ada yang spesifik? mis.: lewati intro, hanya topik yang lucu"
     }
   },
   "urlRescue": {
@@ -245,13 +252,15 @@
     "seriesCount": "Jadikan seri {count} bagian saja?",
     "topic": "Cari setiap momen tentang “{topic}” saja?",
     "recap": "Buat ringkasan saja?",
-    "trailer": "Buat trailer saja?"
+    "trailer": "Buat trailer saja?",
+    "subjects": "Bagaimana kalau satu potongan per topik?"
   },
   "tooShort": {
     "series": "Video ini berdurasi {duration}. Seri butuh minimal 2 menit. Highlight paling cocok di sini.",
     "recap": "Video ini berdurasi {duration}. Ringkasan cocok untuk video lebih dari 3 menit.",
     "trailer": "Video ini berdurasi {duration}. Trailer cocok untuk video lebih dari 3 menit.",
     "topic": "Video ini berdurasi {duration}. Pencarian topik butuh minimal 1 menit.",
+    "subjects": "Video ini berdurasi {duration}. Topik berfungsi pada video lebih dari 5 menit.",
     "useHighlights": "Pakai Highlight"
   },
   "workflowErrors": {
@@ -266,6 +275,7 @@
     "SOURCE_TOO_SHORT_FOR_RECAP": "Video ini sudah pendek. Ringkasan cocok untuk video lebih dari 3 menit.",
     "SOURCE_TOO_SHORT_FOR_TRAILER": "Trailer cocok untuk video lebih dari 3 menit.",
     "SOURCE_TOO_SHORT_FOR_TOPIC": "Video ini terlalu pendek untuk pencarian topik. Coba Highlight saja.",
+    "SOURCE_TOO_SHORT_FOR_SUBJECTS": "Topik berfungsi pada video lebih dari 5 menit. Coba Sorotan.",
     "WORKFLOW_NOT_AVAILABLE": "Opsi ini belum tersedia untuk akun kamu.",
     "INVALID_WORKFLOW_SETTING": "Pengaturan lanjutan itu tidak didukung."
   },
@@ -273,7 +283,8 @@
     "series": "Seri baru",
     "topic": "Pencarian topik baru",
     "recap": "Ringkasan baru",
-    "trailer": "Trailer baru"
+    "trailer": "Trailer baru",
+    "subjects": "Topik baru"
   },
   "advanced": {
     "chip": "Lanjutan",
@@ -290,6 +301,10 @@
       "junction_style": {
         "label": "Potongan antarbagian",
         "hint": "Cara potongan-potongan klip disambung."
+      },
+      "style": {
+        "label": "Gaya editing",
+        "hint": "Jenis momen yang dicari."
       },
       "cold_open": {
         "label": "Cold open",
@@ -349,6 +364,10 @@
       "broad": "Izinkan yang mendekati",
       "strict": "Hanya topik yang persis",
       "relaxed": "Diizinkan",
+      "humor": "Komedi",
+      "drama": "Drama",
+      "hype": "Energi tinggi",
+      "educational": "Edukatif",
       "question": "Sebuah pertanyaan"
     }
   }

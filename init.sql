@@ -327,9 +327,18 @@ CREATE INDEX ix_layout_presets_user ON layout_presets (user_id, created_at DESC)
 -- minutes (backend/src/channel_watch.py) and records every new video as a discovery that
 -- waits for the user's approval. Nothing is clipped or posted until the user approves it.
 -- allows_clips is the user's own note that the channel's owner lets people cut their videos.
+CREATE TABLE streamers (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(80) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX ux_streamers_user_name ON streamers (user_id, lower(name));
+
 CREATE TABLE channel_watches (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    streamer_id VARCHAR(36) REFERENCES streamers(id) ON DELETE CASCADE,
     channel_url TEXT NOT NULL,
     title VARCHAR(200) NOT NULL DEFAULT '',
     allows_clips BOOLEAN NOT NULL DEFAULT false,
@@ -340,6 +349,7 @@ CREATE TABLE channel_watches (
     UNIQUE (user_id, channel_url)
 );
 CREATE INDEX ix_channel_watches_due ON channel_watches (active, last_checked_at);
+CREATE INDEX ix_channel_watches_streamer ON channel_watches (streamer_id);
 
 -- status: baseline (already there when the channel was added), pending, approved, dismissed.
 CREATE TABLE channel_discoveries (

@@ -1,4 +1,4 @@
-"""Automations: followed YouTube channels and their new videos waiting for approval (channel_watch.py)."""
+"""Automations: streamers, their followed channels and their new videos waiting for approval (channel_watch.py)."""
 
 from typing import Any, Dict
 
@@ -36,6 +36,32 @@ def _flag(payload: Dict[str, Any], key: str) -> bool | None:
     return value
 
 
+@router.get("/streamers")
+async def list_streamers(request: Request, db: AsyncSession = Depends(get_db)):
+    user_id = await _user_id(request, db)
+    return {"streamers": await ChannelWatchService.list_streamers(db, user_id)}
+
+
+@router.post("/streamers")
+async def add_streamer(request: Request, db: AsyncSession = Depends(get_db)):
+    user_id = await _user_id(request, db)
+    name = (await _body(request)).get("name")
+    if not isinstance(name, str):
+        raise HTTPException(status_code=422, detail="name is required")
+    try:
+        return {"streamer": await ChannelWatchService.add_streamer(db, user_id, name)}
+    except WatchError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+
+
+@router.delete("/streamers/{streamer_id}")
+async def delete_streamer(streamer_id: str, request: Request, db: AsyncSession = Depends(get_db)):
+    user_id = await _user_id(request, db)
+    if not await ChannelWatchService.delete_streamer(db, user_id, streamer_id):
+        raise HTTPException(status_code=404, detail="Streamer not found")
+    return {"message": "Streamer removed"}
+
+
 @router.get("/channels")
 async def list_channels(request: Request, db: AsyncSession = Depends(get_db)):
     user_id = await _user_id(request, db)
@@ -49,8 +75,13 @@ async def add_channel(request: Request, db: AsyncSession = Depends(get_db)):
     url = payload.get("url")
     if not isinstance(url, str):
         raise HTTPException(status_code=422, detail="url is required")
+    streamer_id = payload.get("streamer_id")
+    if not isinstance(streamer_id, str) or not streamer_id:
+        raise HTTPException(status_code=422, detail="streamer_id is required")
     try:
-        channel = await ChannelWatchService.add_watch(db, user_id, url, _flag(payload, "allows_clips") or False)
+        channel = await ChannelWatchService.add_watch(
+            db, user_id, url, _flag(payload, "allows_clips") or False, streamer_id
+        )
     except WatchError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from None
     return {"channel": channel}

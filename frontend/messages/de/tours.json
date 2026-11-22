@@ -46,5 +46,11 @@
       "body": "Länge, Untertitel, Bildausschnitt, Bereinigung und B-Roll liegen jetzt in einem Menü. Wir merken uns deine Auswahl, du stellst sie also nur einmal ein."
     }
   },
+  "subjects": {
+    "subjects": {
+      "title": "Neu: Themen",
+      "body": "Wähle Themen, um ein langes Video nach dem aufzuteilen, was immer wiederkehrt, etwa jeden Wutausbruch oder einen Running Gag. Du erhältst einen Schnitt pro Thema in Originallänge und kannst ihn danach auf 15 s, 30 s, 1 oder 2 Min. kürzen."
+    }
+  },
   "skip": "Überspringen"
 }

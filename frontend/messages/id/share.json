@@ -14,7 +14,8 @@
     "series": "Seri · {count, plural, one {# bagian} other {# bagian}}",
     "topic": "Topik: {topic}",
     "recap": "Ringkasan",
-    "trailer": "Trailer"
+    "trailer": "Trailer",
+    "subjects": "Per topik"
   },
   "partLabel": "Bagian {n}",
   "totalDuration": "Total {duration}"

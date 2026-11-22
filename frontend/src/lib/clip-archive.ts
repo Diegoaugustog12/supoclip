@@ -9,6 +9,11 @@ export function clipArchivePath(taskApiUrl: string, taskId: string): string {
   return `${taskApiUrl}/${encodeURIComponent(taskId)}/clips/zip`;
 }
 
+/** `?ids=a,b` limiting the archive to the picked clips; empty for the whole task. */
+function selectionQuery(ids?: readonly string[]): string {
+  return ids?.length ? `?ids=${ids.map(encodeURIComponent).join(",")}` : "";
+}
+
 /**
  * Download every clip of a task as one ZIP.
  *
@@ -20,6 +25,7 @@ export function clipArchivePath(taskApiUrl: string, taskId: string): string {
 export async function downloadAllClips({
   taskApiUrl,
   taskId,
+  clipIds,
   readError,
   fallbackMessage,
   request = fetch,
@@ -27,13 +33,16 @@ export async function downloadAllClips({
 }: {
   taskApiUrl: string;
   taskId: string;
+  /** Only these clips; every clip of the task when omitted. */
+  clipIds?: readonly string[];
   readError: (response: Response) => Promise<string>;
   fallbackMessage: string;
   request?: typeof fetch;
   trigger?: (href: string, filename: string) => void;
 }): Promise<ClipArchivePreflight> {
   const path = clipArchivePath(taskApiUrl, taskId);
-  const response = await request(`${path}/preflight`, { cache: "no-store" });
+  const query = selectionQuery(clipIds);
+  const response = await request(`${path}/preflight${query}`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error(await readError(response));
   }
@@ -47,6 +56,6 @@ export async function downloadAllClips({
   if (typeof filename !== "string" || !filename || typeof clipCount !== "number" || clipCount < 1) {
     throw new Error(fallbackMessage);
   }
-  trigger(path, filename);
+  trigger(`${path}${query}`, filename);
   return { filename, clipCount };
 }

@@ -17,7 +17,7 @@ from typing import Any, Mapping, Optional, Union
 from .errors import WorkflowRequestError
 
 SettingValue = Union[bool, int, str]
-PLANNED_WORKFLOWS = ("series", "topic", "recap", "trailer")
+PLANNED_WORKFLOWS = ("series", "topic", "recap", "trailer", "subjects")
 
 
 @dataclass(frozen=True)
@@ -66,6 +66,11 @@ SETTINGS: dict[str, tuple[Setting, ...]] = {
     "topic": (
         Setting("max_clips", "int", None, minimum=1, maximum=15),
         Setting("match", "enum", "broad", choices=("broad", "strict")),
+        *_SHARED,
+    ),
+    "subjects": (
+        Setting("max_clips", "int", None, minimum=1, maximum=10),
+        Setting("style", "enum", "auto", choices=("auto", "humor", "drama", "hype", "educational")),
         *_SHARED,
     ),
     "recap": (

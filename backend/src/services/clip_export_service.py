@@ -67,12 +67,25 @@ def export_options_hash(preset: str, source_file_path: str) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def export_download_filename(clip_filename: str, preset: str) -> str:
-    suffix = f"_{preset}.mp4"
-    stem = Path(clip_filename).name
+def clip_download_stem(clip: dict) -> str:
+    """The name a downloaded clip carries: its title (a shortened copy adds its length)."""
+    title = " ".join(str(clip.get("hook_title") or "").split())
+    if not title:
+        title = Path(str(clip.get("filename") or "")).name
+        if title.lower().endswith(".mp4"):
+            title = title[:-4]
+    shortened = (clip.get("workflow_meta") or {}).get("shortened_to")
+    if title and isinstance(shortened, int) and shortened > 0:
+        title += f" - {shortened // 60} min" if shortened % 60 == 0 else f" - {shortened} s"
+    return title
+
+
+def export_download_filename(clip_filename: str, preset: str, title: str = "") -> str:
+    suffix = f"_{preset}.mp4" if preset else ".mp4"
+    stem = title.strip() or Path(clip_filename).name
     if stem.lower().endswith(".mp4"):
         stem = stem[:-4]
-    for character in ('"', "\r", "\n", "/", "\\"):
+    for character in ('"', "\r", "\n", "/", "\\", "<", ">", ":", "|", "?", "*"):
         stem = stem.replace(character, "")
     stem = stem.strip() or "clip"
     return f"{stem[: 255 - len(suffix)]}{suffix}"
@@ -321,7 +334,7 @@ async def start_export(
         preset=preset,
         options_hash=options_hash,
         source_file_path=clip["file_path"],
-        download_filename=export_download_filename(clip["filename"], preset),
+        download_filename=export_download_filename(clip["filename"], preset, clip_download_stem(clip)),
         ttl_seconds=CLIP_EXPORT_TTL_SECONDS,
     )
     await db.commit()

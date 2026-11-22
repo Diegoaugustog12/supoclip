@@ -46,5 +46,11 @@
       "body": "Duração, legendas, enquadramento, limpeza e B-roll agora ficam em um só menu. Lembramos suas escolhas, então você só configura uma vez."
     }
   },
+  "subjects": {
+    "subjects": {
+      "title": "Novo: Assuntos",
+      "body": "Escolha Assuntos para separar um vídeo longo pelo que se repete nele, como todas as vezes que alguém perde a paciência ou uma piada que volta. Você recebe um corte por assunto no tempo original e depois pode encurtar para 15 s, 30 s, 1 ou 2 min."
+    }
+  },
   "skip": "Pular"
 }

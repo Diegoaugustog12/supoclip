@@ -676,3 +676,63 @@ def trailer_story_block(outline: Any, chapter_lines: Sequence[str] = ()) -> str:
 
 def _seconds(value: float) -> str:
     return f"{float(value):.0f}"
+
+
+# -- subjects --------------------------------------------------------------------
+
+
+def subjects_discover_system(language_name: str) -> str:
+    return (
+        preamble(language_name, listing=False)
+        + "\n\nTASK: The creator wants this long video split by SUBJECT: one compilation per recurring subject, "
+        "gathering every moment of that subject from across the video. Find the subjects.\n"
+        "A subject is a kind of moment or a thread that comes back at different points of the video "
+        "(for a gameplay stream: the player losing their temper, the two friends inventing nicknames, almost "
+        "winning and losing at the end, a running joke or a mock-boast). For talks and interviews it is a "
+        "theme the speakers return to. Look at what the video actually contains, whatever its genre.\n"
+        "- Each subject must come up at least twice and be specific enough that someone could say, for any "
+        "moment, whether it belongs. 'Funny moments' or 'Highlights' is too broad: split it by what is funny.\n"
+        "- Subjects must not overlap: one moment belongs to one subject.\n"
+        "- The creator does not choose subjects: you do, and you choose for VIRAL POTENTIAL. Favour subjects people "
+        "watch to the end and send to friends: strong emotion (anger, shock, laughter, awkwardness), conflict, "
+        "running jokes, near-misses and reversals, mock-boasts that fall flat, confessions, surprising reveals. "
+        "Skip subjects that are only informative, neutral or repetitive, even if they come up often.\n"
+        "- virality: 0-100 for each subject, strictly. 80+ would perform on its own as a short; under 40 is not worth a cut "
+        "(do not return it).\n"
+        "- Prefer fewer, richer subjects over many thin ones: 3-10 in total, most viral first.\n"
+        f"- label: 2-5 words in {language_name}, written as a title a viewer would click.\n"
+        "- description: one sentence on what belongs and what does not.\n"
+        "- keywords: words or short phrases speakers say or react with, only if useful."
+    )
+
+
+def subjects_block(subjects: Sequence[Any]) -> str:
+    lines = ["<subjects>"]
+    for number, subject in enumerate(subjects, start=1):
+        extra = f" Signals: {', '.join(subject.keywords)}." if subject.keywords else ""
+        lines.append(f"{number}. {fence_safe(subject.label)}: {fence_safe(subject.description)}{extra}")
+    lines.append("</subjects>")
+    return "\n".join(lines)
+
+
+def subjects_extract_system(language_name: str) -> str:
+    return (
+        preamble(language_name)
+        + "\n\nTASK: Find EVERY moment in this part of the video that belongs to one of the subjects in <subjects>. "
+        "Each subject becomes one compilation, so completeness matters, but a weak or doubtful moment "
+        "is worse than none.\n"
+        "Each moment:\n"
+        "- belongs to exactly one subject (the closest one); a moment that fits none is not returned\n"
+        "- is one self-contained beat of that subject: the setup, the reaction and the payoff or punchline, "
+        "from the sentence that starts it to the sentence that closes it. Include the line that makes it "
+        "funny, tense or telling, and the reaction to it\n"
+        "- keeps its natural length. Do not shorten it to fit any limit: the creator trims later. Typical beats "
+        "last 5-60 seconds; a long scene that is one continuous beat stays one moment\n"
+        "- does not overlap another moment you return, and two beats of the same scene that touch are one moment\n"
+        "- is understandable inside a compilation of its own subject, without the rest of the video\n"
+        "strength 0-100 is the moment's viral potential inside its subject (emotion, surprise, humour, a clean payoff): 85+ the best examples of the subject in the video, 60-84 clear and good, 45-59 "
+        "acceptable, below 45 do not return it.\n"
+        f"title: 3-9 words in {language_name} naming what happens in this beat; every claim in it is in the moment.\n"
+        "Write window_notes first (at most 80 words): the beats you see in this stretch and which subject each "
+        "serves. Returning no moments is a correct answer."
+    )

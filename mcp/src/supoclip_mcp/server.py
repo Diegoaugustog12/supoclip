@@ -124,7 +124,7 @@ VALID_OUTPUT_FORMATS = {"vertical", "vertical_fit", "vertical_pan", "vertical_sp
 
 # Mirrors backend/src/workflows/options.py so bad requests fail here with a clear
 # message instead of a 422 round trip. The backend stays the authority.
-WORKFLOWS = ("highlights", "series", "topic", "recap", "trailer")
+WORKFLOWS = ("highlights", "series", "topic", "recap", "trailer", "subjects")
 TOPIC_MIN_CHARS, TOPIC_MAX_CHARS = 2, 120
 INSTRUCTIONS_MAX_CHARS = 500
 SERIES_MIN_PARTS, SERIES_MAX_PARTS = 2, 10
@@ -205,7 +205,7 @@ def _workflow_fields(workflow: str, topic: str, part_count: int, instructions: s
     """
     workflow = (workflow or "highlights").strip().lower()
     if workflow not in WORKFLOWS:
-        raise SupoClipError("workflow must be highlights, series, topic, recap or trailer.")
+        raise SupoClipError("workflow must be highlights, series, topic, recap, trailer or subjects.")
 
     fields: dict = {} if workflow == "highlights" else {"workflow": workflow}
     cleaned_topic = _normalize_text(topic, keep_newlines=False)
@@ -463,8 +463,10 @@ async def supoclip_create_clip_task(
     fails with code topic_not_found and suggested topics when the video barely
     covers it. "recap" = ONE short video covering the main points in order;
     clip_length sets total length. "trailer" = ONE short teaser that never
-    reveals the payoff; clip_length sets total length. Series/recap/trailer need
-    videos of at least 2/3/3 minutes. instructions: optional free-text editorial
+    reveals the payoff; clip_length sets total length. "subjects" = ONE
+    compilation per recurring subject of a long video (every beat of that
+    subject, at its original length; clip_length does not apply). Series/recap/
+    trailer/subjects need videos of at least 2/3/3/5 minutes. instructions: optional free-text editorial
     guidance for any workflow (max 500 characters), e.g. "skip the sponsor read"
     or "focus on the hiring story".
 
@@ -491,7 +493,7 @@ async def supoclip_create_clip_task(
             long (90-175s). Recap: total, auto (scales with the video), short
             (~45s), medium (~75s), long (~2 min). Trailer: total, auto (~30s),
             short (~20s), medium (~40s), long (~60s).
-        workflow: 'highlights' | 'series' | 'topic' | 'recap' | 'trailer'.
+        workflow: 'highlights' | 'series' | 'topic' | 'recap' | 'trailer' | 'subjects'.
         topic: The subject to find (workflow='topic' only), max 120 characters.
         part_count: Series parts, 0 = auto or 2-10 (workflow='series' only).
         instructions: Optional editorial guidance for any workflow, max 500 characters.

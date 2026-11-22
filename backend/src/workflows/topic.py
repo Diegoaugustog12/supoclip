@@ -207,17 +207,19 @@ def _seconds_of(index: UnitIndex, first: int, last: int) -> float:
     return index.unit(last).end - index.unit(first).start
 
 
-def _split_region(index: UnitIndex, first: int, last: int) -> list[tuple[int, int]]:
+def _split_region(
+    index: UnitIndex, first: int, last: int, window_seconds: float = WINDOW_SECONDS
+) -> list[tuple[int, int]]:
     """A region longer than a window, in window-sized pieces cut at strong boundaries, 1 min overlap."""
     pieces: list[tuple[int, int]] = []
     start = first
     while start <= last:
-        if _seconds_of(index, start, last) <= WINDOW_SECONDS:
+        if _seconds_of(index, start, last) <= window_seconds:
             pieces.append((start, last))
             break
         end = start
         best_strong: Optional[int] = None
-        while end < last and _seconds_of(index, start, end + 1) <= WINDOW_SECONDS:
+        while end < last and _seconds_of(index, start, end + 1) <= window_seconds:
             end += 1
             if index.boundary_strength(end) >= STRONG_BOUNDARY:
                 best_strong = end
@@ -233,14 +235,16 @@ def _split_region(index: UnitIndex, first: int, last: int) -> list[tuple[int, in
     return pieces
 
 
-def pack_windows(index: UnitIndex, regions: Sequence[tuple[int, int]]) -> list[list[int]]:
+def pack_windows(
+    index: UnitIndex, regions: Sequence[tuple[int, int]], window_seconds: float = WINDOW_SECONDS
+) -> list[list[int]]:
     """Unit ids per extraction window: whole regions packed up to 12 minutes each."""
-    pieces = [piece for first, last in regions for piece in _split_region(index, first, last)]
+    pieces = [piece for first, last in regions for piece in _split_region(index, first, last, window_seconds)]
     windows: list[list[tuple[int, int]]] = []
     used = 0.0
     for first, last in pieces:
         length = _seconds_of(index, first, last)
-        if windows and used + length <= WINDOW_SECONDS:
+        if windows and used + length <= window_seconds:
             windows[-1].append((first, last))
             used += length
         else:

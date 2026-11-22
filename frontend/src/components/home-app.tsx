@@ -76,6 +76,7 @@ const WORKFLOW_ERROR_CODES: Record<WorkflowRequestErrorCode, true> = {
   INVALID_WORKFLOW: true, INVALID_WORKFLOW_OPTIONS: true, TOPIC_REQUIRED: true, TOPIC_TOO_LONG: true,
   INVALID_PART_COUNT: true, INSTRUCTIONS_TOO_LONG: true, INVALID_WORKFLOW_SETTING: true, WORKFLOW_NOT_AVAILABLE: true, SOURCE_TOO_SHORT_FOR_SERIES: true,
   TOO_MANY_PARTS: true, SOURCE_TOO_SHORT_FOR_RECAP: true, SOURCE_TOO_SHORT_FOR_TRAILER: true, SOURCE_TOO_SHORT_FOR_TOPIC: true,
+  SOURCE_TOO_SHORT_FOR_SUBJECTS: true,
 };
 
 const SOURCE_TOO_SHORT_CODES = {
@@ -83,6 +84,7 @@ const SOURCE_TOO_SHORT_CODES = {
   topic: "SOURCE_TOO_SHORT_FOR_TOPIC",
   recap: "SOURCE_TOO_SHORT_FOR_RECAP",
   trailer: "SOURCE_TOO_SHORT_FOR_TRAILER",
+  subjects: "SOURCE_TOO_SHORT_FOR_SUBJECTS",
 } as const satisfies Record<Exclude<Workflow, "highlights">, WorkflowRequestErrorCode>;
 
 /** A request typed into the link box, and how to put things back. */

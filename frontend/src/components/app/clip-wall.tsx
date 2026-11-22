@@ -8,6 +8,7 @@ import {
   Play, Scissors, Share2, Star, Trash2, TrendingUp,
 } from "lucide-react";
 import { ClipCover, ScoreRing } from "@/components/app/clip-cover";
+import { SelectDot } from "@/components/app/select-dot";
 import DynamicVideoPlayer from "@/components/dynamic-video-player";
 import { TranscriptPreview } from "@/components/transcript-preview";
 import { Button } from "@/components/ui/button";
@@ -36,12 +37,13 @@ export interface WallClip extends WorkflowClipFields {
   shareability_score: number;
   hook_type: string | null;
   hook_title: string | null;
+  reasoning?: string | null;
 }
 
 type TaskT = ReturnType<typeof useTranslations<"task">>;
 
 /** Parts, recaps and trailers are planned pieces, not scored picks. */
-const UNSCORED_ROLES = new Set(["part", "recap", "trailer"]);
+const UNSCORED_ROLES = new Set(["part", "recap", "trailer", "subject"]);
 
 export function isPart(clip: WorkflowClipFields): clip is WorkflowClipFields & { part_number: number } {
   return clip.workflow_role === "part" && typeof clip.part_number === "number";
@@ -89,7 +91,7 @@ function sourceMoments(clip: WallClip): SourceRange[] | null {
   return Array.isArray(ranges) && ranges.length > 1 ? ranges : null;
 }
 
-export function ClipTile({ clip, taskId, busy, best, editable, partTotal, onOpen, onDownload, onDelete }: {
+export function ClipTile({ clip, taskId, busy, best, editable, partTotal, selected, selecting, onToggleSelect, onOpen, onDownload, onDelete }: {
   clip: WallClip;
   taskId: string;
   busy: boolean;
@@ -97,6 +99,10 @@ export function ClipTile({ clip, taskId, busy, best, editable, partTotal, onOpen
   editable: boolean;
   /** Parts in the series, for the "Part n of N" badge. */
   partTotal?: number;
+  /** Picked for "download selected"; `selecting` keeps every check visible once one is picked. */
+  selected?: boolean;
+  selecting?: boolean;
+  onToggleSelect?: () => void;
   onOpen: () => void;
   onDownload: () => void;
   onDelete?: () => void;
@@ -106,6 +112,8 @@ export function ClipTile({ clip, taskId, busy, best, editable, partTotal, onOpen
   const why = clip.workflow_meta?.why;
   return (
     <article className="group @container animate-rise">
+      <div className="group/select relative">
+      {onToggleSelect && <SelectDot selected={!!selected} always={selecting} onToggle={onToggleSelect} label={t("selectClip", { title })} />}
       <button
         type="button"
         onClick={onOpen}
@@ -118,11 +126,11 @@ export function ClipTile({ clip, taskId, busy, best, editable, partTotal, onOpen
         >
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/25" />
           {isPart(clip) ? (
-            <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-white backdrop-blur">
+            <span className={`absolute ${onToggleSelect ? "left-10" : "left-2"} top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-white backdrop-blur`}>
               {partTotal ? t("partOf", { n: clip.part_number, total: partTotal }) : t("partLabel", { n: clip.part_number })}
             </span>
           ) : best && (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-foreground shadow">
+            <span className={`absolute ${onToggleSelect ? "left-10" : "left-2"} top-2 inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-foreground shadow`}>
               <Flame className="size-3" />{t("topPick")}
             </span>
           )}
@@ -137,6 +145,7 @@ export function ClipTile({ clip, taskId, busy, best, editable, partTotal, onOpen
           <span className="absolute bottom-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-white">{formatClipDuration(clip.duration)}</span>
         </ClipCover>
       </button>
+      </div>
       <div className="mt-2.5 px-0.5">
         {why ? (
           <Tooltip>
@@ -209,13 +218,13 @@ export function ClipFocus({ clip, taskId, index, total, busy, editable, onNaviga
 
   return (
     <Dialog open={clip !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-h-[92dvh] max-w-5xl gap-0 overflow-hidden p-0 md:grid-cols-[auto_1fr]">
+      <DialogContent className="max-h-[92dvh] max-w-5xl gap-0 overflow-y-auto p-0 md:grid-cols-[auto_1fr] md:overflow-hidden">
         {clip && (
           <>
             <div className="relative flex items-center justify-center bg-stone-950 p-3 md:p-4">
               <DynamicVideoPlayer key={clip.id} src={getClipUrl(clip.video_url, clip.filename)} autoPlay className="h-[min(58dvh,560px)]! md:h-[min(80dvh,640px)]!" />
             </div>
-            <div className="flex min-h-0 flex-col overflow-y-auto">
+            <div className="flex min-h-0 flex-col md:max-h-[92dvh] md:overflow-y-auto">
               <div className="flex items-center justify-between gap-2 border-b px-5 py-3 pr-12 text-xs text-muted-foreground">
                 <span className="tabular-nums">{t("position", { current: index + 1, total })}</span>
                 <div className="flex items-center gap-1">
@@ -312,9 +321,9 @@ export function ClipFocus({ clip, taskId, index, total, busy, editable, onNaviga
 }
 
 /** Catchy description and hashtags for posting this clip, written on request. */
-function PostCopyPanel({ taskId, clipId }: { taskId: string; clipId: string }) {
+export function PostCopyPanel({ taskId, clipId }: { taskId: string; clipId: string }) {
   const t = useTranslations("task");
-  const [state, setState] = useState<{ description: string; hashtags: string[] } | null>(null);
+  const [state, setState] = useState<{ description: string; hashtags: string[]; char_count?: number; trending?: boolean; hooks?: { text: string; style: string }[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   useEffect(() => { setState(null); setError(false); }, [clipId]);
@@ -342,18 +351,36 @@ function PostCopyPanel({ taskId, clipId }: { taskId: string; clipId: string }) {
           {loading ? <Loader2 className="size-4 animate-spin" /> : null}{state ? t("postCopy.again") : t("postCopy.generate")}
         </Button>
       </div>
+      {loading && <p role="status" className="text-xs text-muted-foreground">{t("postCopy.loadingHint")}</p>}
       {error && <p role="alert" className="text-sm text-destructive">{t("postCopy.error")}</p>}
       {state && (
         <div className="space-y-3 text-sm">
-          <p className="whitespace-pre-wrap">{state.description}</p>
+          {state.char_count ? <p className="text-xs tabular-nums text-muted-foreground">{t("postCopy.chars", { count: state.char_count })}</p> : null}
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => copy(`${state.description}\n\n${state.hashtags.join(" ")}`)}>{t("postCopy.copyAll")}</Button>
+            <Button size="sm" variant="outline" onClick={() => copy(state.description)}>{t("postCopy.copyText")}</Button>
+            <Button size="sm" variant="outline" onClick={() => copy(state.hashtags.join(" "))}>{t("postCopy.copyTags")}</Button>
+          </div>
+          {state.trending && <p className="text-xs text-muted-foreground">{t("postCopy.trending")}</p>}
           <p className="flex flex-wrap gap-1.5">
             {state.hashtags.map((tag) => <span key={tag} className="rounded-md bg-muted px-2 py-1 text-xs">{tag}</span>)}
           </p>
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => copy(state.description)}>{t("postCopy.copyText")}</Button>
-            <Button size="sm" variant="outline" onClick={() => copy(state.hashtags.join(" "))}>{t("postCopy.copyTags")}</Button>
-            <Button size="sm" onClick={() => copy(`${state.description}\n\n${state.hashtags.join(" ")}`)}>{t("postCopy.copyAll")}</Button>
-          </div>
+          {state.hooks && state.hooks.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">{t("postCopy.hooks")}</p>
+              <ul className="space-y-1">
+                {state.hooks.map((hook) => (
+                  <li key={hook.text} className="flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-1.5">
+                    <span className="min-w-0 flex-1">{hook.text}</span>
+                    <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">{hook.style}</span>
+                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => copy(hook.text)}>{t("postCopy.copyHook")}</Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {/* No inner scroll box: the dialog scrolls, so a drag-selection can run to the last line. */}
+          <p className="select-text whitespace-pre-wrap leading-relaxed">{state.description}</p>
         </div>
       )}
     </section>

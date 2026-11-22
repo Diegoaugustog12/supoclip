@@ -31,13 +31,15 @@
       "series": "Serie · {count, plural, one {# parte} other {# partes}}",
       "topic": "Tema · {count, plural, one {# momento} other {# momentos}}",
       "recap": "Resumen",
-      "trailer": "Tráiler"
+      "trailer": "Tráiler",
+      "subjects": "Asuntos · {count, plural, one {# corte} other {# cortes}}"
     },
     "findingByWorkflow": {
       "series": "Trazando la historia…",
       "topic": "Buscando momentos sobre tu tema…",
       "recap": "Eligiendo los puntos clave…",
-      "trailer": "Escribiendo el tráiler…"
+      "trailer": "Escribiendo el tráiler…",
+      "subjects": "Buscando los asuntos…"
     }
   },
   "title": "Biblioteca",

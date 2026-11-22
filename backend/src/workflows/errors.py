@@ -48,6 +48,7 @@ class WorkflowError(ValueError):
             "source_too_short",
             "no_story",
             "topic_not_found",
+            "subjects_not_found",
             "recap_unsupported",
             "trailer_unbuildable",
             "analysis_incomplete",

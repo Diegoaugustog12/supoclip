@@ -366,6 +366,18 @@ def base_proxy_params(task_id: Optional[str] = None, video_id: Optional[str] = N
             "Accept-Language": "en-US,en;q=0.9",
         },
     }
+    params.update(challenge_params(runtime))
+    return params
+
+
+def challenge_params(config=None) -> dict[str, Any]:
+    """PO-token provider and JS runtime settings shared by every yt-dlp call.
+
+    Without them YouTube hands out stream URLs that googlevideo refuses (403),
+    so anything that reads a stream directly (the layout preview) needs them too.
+    """
+    runtime = config or get_config()
+    params: dict[str, Any] = {}
     pot_url = (getattr(runtime, "youtube_pot_provider_url", "") or "").strip()
     if pot_url:
         params["extractor_args"] = {

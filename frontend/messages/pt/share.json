@@ -14,7 +14,8 @@
     "series": "Série · {count, plural, one {# parte} other {# partes}}",
     "topic": "Tema: {topic}",
     "recap": "Resumo",
-    "trailer": "Trailer"
+    "trailer": "Trailer",
+    "subjects": "Por assunto"
   },
   "partLabel": "Parte {n}",
   "totalDuration": "{duration} no total"

@@ -17,8 +17,8 @@ import {
 } from "./workflows";
 
 describe("workflows contract", () => {
-  it("recognises only the five workflow ids", () => {
-    expect(WORKFLOWS).toEqual(["highlights", "series", "topic", "recap", "trailer"]);
+  it("recognises only the six workflow ids", () => {
+    expect(WORKFLOWS).toEqual(["highlights", "series", "topic", "subjects", "recap", "trailer"]);
     for (const workflow of WORKFLOWS) expect(isWorkflow(workflow)).toBe(true);
     for (const value of ["Series", "", null, undefined, 1, {}, "bogus"]) expect(isWorkflow(value)).toBe(false);
   });
@@ -31,7 +31,7 @@ describe("workflows contract", () => {
   });
 
   it("mirrors the backend limits", () => {
-    expect(MIN_SOURCE_SECONDS).toEqual({ highlights: 0, series: 120, topic: 60, recap: 180, trailer: 180 });
+    expect(MIN_SOURCE_SECONDS).toEqual({ highlights: 0, series: 120, topic: 60, recap: 180, trailer: 180, subjects: 300 });
     expect([TOPIC_MAX_CHARS, INSTRUCTIONS_MAX_CHARS]).toEqual([120, 500]);
     expect(PART_COUNT_OPTIONS).toEqual(["auto", 2, 3, 4, 5, 6, 8, 10]);
     expect([...SINGLE_OUTPUT]).toEqual(["recap", "trailer"]);
@@ -39,7 +39,7 @@ describe("workflows contract", () => {
   });
 
   it("sorts series by timeline and everything else by score", () => {
-    expect(WORKFLOWS.map(defaultSort)).toEqual(["score", "timeline", "score", "score", "score"]);
+    expect(WORKFLOWS.map(defaultSort)).toEqual(["score", "timeline", "score", "score", "score", "score"]);
   });
 
   it("expects one output for recaps and trailers", () => {

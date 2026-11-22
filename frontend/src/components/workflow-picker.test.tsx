@@ -29,6 +29,7 @@ describe("WorkflowPicker", () => {
       ["Highlights", "The best standalone moments"],
       ["Series", "Consecutive parts that tell the whole story"],
       ["Topic", "Every strong moment about one subject"],
+      ["Subjects", "One cut per recurring subject"],
       ["Recap", "One short video covering the main points"],
       ["Trailer", "One short preview that makes people watch the full video"],
     ];
@@ -44,7 +45,7 @@ describe("WorkflowPicker", () => {
   it("keeps one tab stop on the selected card and selects with a click", () => {
     const onChange = vi.fn();
     render(<Controlled initial="topic" onChange={onChange} />);
-    expect(screen.getAllByRole("radio").map((radio) => radio.tabIndex)).toEqual([-1, -1, 0, -1, -1]);
+    expect(screen.getAllByRole("radio").map((radio) => radio.tabIndex)).toEqual([-1, -1, 0, -1, -1, -1]);
     fireEvent.click(screen.getByRole("radio", { name: /Recap/ }));
     expect(onChange).toHaveBeenLastCalledWith("recap");
     expect(screen.getByRole("radio", { name: /Recap/ })).toHaveAttribute("aria-checked", "true");

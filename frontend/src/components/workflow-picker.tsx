@@ -58,7 +58,7 @@ export function WorkflowPicker({ value, onChange, disabled, available, labelId }
   };
 
   return (
-    <div data-tour="workflow-picker" role="radiogroup" aria-labelledby={labelId} aria-disabled={disabled || undefined} className="-mx-4 flex rounded-2xl snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-5 sm:overflow-visible sm:px-0 sm:pb-0">
+    <div data-tour="workflow-picker" role="radiogroup" aria-labelledby={labelId} aria-disabled={disabled || undefined} className="-mx-4 flex rounded-2xl snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-6 sm:overflow-visible sm:px-0 sm:pb-0">
       {WORKFLOWS.map((id) => {
         const selectable = available.has(id);
         const checked = value === id;
@@ -160,6 +160,25 @@ export function WorkflowGlyph({ id, className }: { id: Workflow; className?: str
               <circle cx="17" cy="17" r="7" /><path d="M22.5 22.5l5.5 5.5" />
             </g>
             <Tile x={42} strong /><Tile x={66} strong /><Tile x={90} strong />
+          </>
+        ) : id === "subjects" ? (
+          // One compilation per recurring subject: the same colour in the source is gathered into one clip.
+          <>
+            <Link from={21} to={21} /><Link from={60} to={60} /><Link from={99} to={99} />
+            <Source marks={[[12, 8], [28, 8], [40, 8], [56, 8], [78, 8], [92, 8]]} />
+            <Tile x={12} strong>
+              <rect x="16" y="14" width="10" height="2.5" rx="1.25" fill="currentColor" className={ACCENT} />
+              <rect x="16" y="20" width="10" height="2.5" rx="1.25" fill="currentColor" fillOpacity="0.45" />
+              <rect x="16" y="26" width="6" height="2.5" rx="1.25" fill="currentColor" fillOpacity="0.45" />
+            </Tile>
+            <Tile x={51} strong>
+              <circle cx="60" cy="18" r="3" fill="currentColor" fillOpacity="0.5" />
+              <rect x="55" y="26" width="10" height="2.5" rx="1.25" fill="currentColor" fillOpacity="0.45" />
+            </Tile>
+            <Tile x={90} strong>
+              <path d="M99 12l3 6h-6z" fill="currentColor" fillOpacity="0.5" />
+              <rect x="94" y="26" width="10" height="2.5" rx="1.25" fill="currentColor" fillOpacity="0.45" />
+            </Tile>
           </>
         ) : id === "recap" ? (
           // Points from across the whole video, gathered into one clip that lists them.

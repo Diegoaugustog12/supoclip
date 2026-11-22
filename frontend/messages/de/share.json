@@ -14,7 +14,8 @@
     "series": "Serie · {count, plural, one {# Teil} other {# Teile}}",
     "topic": "Thema: {topic}",
     "recap": "Zusammenfassung",
-    "trailer": "Trailer"
+    "trailer": "Trailer",
+    "subjects": "Nach Thema"
   },
   "partLabel": "Teil {n}",
   "totalDuration": "{duration} gesamt"

@@ -18,7 +18,8 @@
   "toasts": {
     "settingsApplied": "Configurações da geração aplicadas",
     "cancelled": "Geração cancelada",
-    "retryQueued": "Geração na fila para nova tentativa"
+    "retryQueued": "Geração na fila para nova tentativa",
+    "shortened": "Versão mais curta pronta"
   },
   "hooks": {
     "question": "Gancho de pergunta",
@@ -147,6 +148,7 @@
     "topic": "Tema: {topic}",
     "recap": "Resumo",
     "trailer": "Trailer",
+    "subjects": "Por assunto",
     "seriesPending": "Série"
   },
   "partOf": "Parte {n} de {total}",
@@ -174,6 +176,19 @@
   "sourceMoments": "Trechos do original",
   "playFrom": "Tocar a partir de {time}",
   "topicHeader": "Sobre {topic} · {count, plural, one {# momento} other {# momentos}}",
+  "subjectsHeader": "{count, plural, one {# assunto} other {# assuntos}}",
+  "subjectsHint": "Cada corte reúne todos os momentos de um assunto, no tempo original. Encurte quando precisar.",
+  "subjectVersions": "Versões mais curtas",
+  "subjectUpTo": "Até {length}",
+  "subjectRecommended": "Recomendado",
+  "selectClip": "Selecionar {title}",
+  "selectedCount": "Selecionados: {count}",
+  "downloadSelected": "Baixar selecionados",
+  "clearSelection": "Limpar seleção",
+  "subjectMoments": "{count, plural, one {# momento} other {# momentos}}",
+  "subjectDownloadOriginal": "Baixar original",
+  "shorten": "Encurtar",
+  "shortenNamed": "Encurtar {title}",
   "instructionsUsed": "Instruções",
   "stepsByWorkflow": {
     "series": {
@@ -191,6 +206,10 @@
     "trailer": {
       "finding": "Escrevendo o trailer",
       "rendering": "Editando o seu trailer"
+    },
+    "subjects": {
+      "finding": "Separando os assuntos",
+      "rendering": "Editando cada assunto"
     }
   },
   "workflowNotes": {
@@ -213,6 +232,11 @@
       "mentions": "Mencionado de passagem em {times}.",
       "cta": "Criar destaques"
     },
+    "subjects_not_found": {
+      "title": "Nenhum assunto volta vezes suficientes",
+      "body": "Não juntamos momentos suficientes de um mesmo assunto para fazer um corte. Seus minutos foram devolvidos.",
+      "cta": "Criar destaques"
+    },
     "source_too_short": {
       "series": {
         "title": "Este vídeo é curto demais para uma série",
@@ -229,6 +253,10 @@
       "trailer": {
         "title": "Este vídeo é curto demais para um trailer",
         "body": "Trailers funcionam em vídeos com mais de 3 minutos. Seus minutos foram reembolsados."
+      },
+      "subjects": {
+        "title": "Este vídeo é curto demais para assuntos",
+        "body": "Assuntos funcionam em vídeos com mais de 5 minutos. Seus minutos foram devolvidos."
       },
       "cta": "Criar destaques"
     },
@@ -298,6 +326,12 @@
     "error": "Não consegui gerar agora. Tente de novo.",
     "copyText": "Copiar texto",
     "copyTags": "Copiar hashtags",
-    "copyAll": "Copiar tudo"
-  }
+    "copyAll": "Copiar tudo",
+    "chars": "{count} caracteres",
+    "trending": "Hashtags em alta no YouTube neste assunto",
+    "loadingHint": "Escrevendo a descrição. Pode levar alguns segundos.",
+    "hooks": "Ganchos alternativos",
+    "copyHook": "Copiar"
+  },
+  "scheduleSelected": "Agendar selecionados"
 }

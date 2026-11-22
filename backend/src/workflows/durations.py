@@ -21,6 +21,9 @@ SERIES_MAX_PARTS = 10
 SERIES_SOURCE_HEADROOM = 1.25
 # Render safety cap for any planned segment, whatever its budget says.
 WORKFLOW_RENDER_HARD_MAX_SECONDS = 185.0
+# A subject compilation keeps the source's own timing, so it may run far past the
+# short-form cap. Only its role lifts the render cap; nothing else does.
+SUBJECT_RENDER_HARD_MAX_SECONDS = 1800.0
 # Planned clips may run this much past their budget maximum before the render
 # cap trims them. Planners never rely on it.
 RENDER_CAP_PADDING_SECONDS = 5.0
@@ -33,6 +36,7 @@ MIN_SOURCE_SECONDS: dict[str, int] = {
     "topic": 60,
     "recap": 180,
     "trailer": 180,
+    "subjects": 300,
 }
 
 
@@ -169,6 +173,22 @@ def topic_budget(clip_length: str) -> Budget:
     return clip_budget(clip_length)
 
 
+def subject_budget() -> Budget:
+    """Length of one subject compilation. The creator trims it afterwards, so the
+    window is wide: ``min`` is the least worth publishing, ``max`` the render ceiling."""
+    return Budget(
+        min=15.0,
+        ideal_min=60.0,
+        ideal_max=600.0,
+        max=SUBJECT_RENDER_HARD_MAX_SECONDS - 60.0,
+        render_cap=SUBJECT_RENDER_HARD_MAX_SECONDS,
+    )
+
+
+# What "shorten this subject" may ask for, in seconds.
+SHORTEN_CHOICES: tuple[int, ...] = (15, 30, 60, 120)
+
+
 def workflow_budget(
     workflow: str, clip_length: str, source_seconds: float = 0.0, target_seconds: Optional[int] = None
 ) -> Budget:
@@ -182,6 +202,8 @@ def workflow_budget(
         return trailer_budget(clip_length, target_seconds)
     if workflow == "topic":
         return topic_budget(clip_length)
+    if workflow == "subjects":
+        return subject_budget()
     if workflow == "highlights":
         return clip_budget(clip_length)
     raise ValueError(f"Unknown workflow: {workflow}")

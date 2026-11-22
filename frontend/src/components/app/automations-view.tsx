@@ -10,8 +10,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
+type Streamer = { id: string; name: string };
+
 type Channel = {
   id: string;
+  streamer_id: string | null;
   channel_url: string;
   platform?: "youtube" | "twitch" | "kick";
   title: string;
@@ -25,6 +28,8 @@ type Channel = {
 type Discovery = {
   id: string;
   watch_id: string;
+  streamer_name: string;
+  channel_platform?: "youtube" | "twitch" | "kick";
   channel_title: string;
   allows_clips: boolean;
   video_id: string;
@@ -51,20 +56,25 @@ async function errorText(response: Response, fallback: string) {
 
 export function AutomationsView() {
   const t = useTranslations("automations");
+  const [streamers, setStreamers] = useState<Streamer[]>([]);
+  const [streamerName, setStreamerName] = useState("");
+  const [addingStreamer, setAddingStreamer] = useState(false);
   const [channels, setChannels] = useState<Channel[] | null>(null);
   const [discoveries, setDiscoveries] = useState<Discovery[]>([]);
-  const [url, setUrl] = useState("");
-  const [allowsClips, setAllowsClips] = useState(false);
-  const [adding, setAdding] = useState(false);
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  const [allowsByStreamer, setAllowsByStreamer] = useState<Record<string, boolean>>({});
+  const [adding, setAdding] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [created, setCreated] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     try {
-      const [channelResponse, discoveryResponse] = await Promise.all([
+      const [streamerResponse, channelResponse, discoveryResponse] = await Promise.all([
+        fetch("/api/automations/streamers", { cache: "no-store" }),
         fetch("/api/automations/channels", { cache: "no-store" }),
         fetch("/api/automations/discoveries?status=pending", { cache: "no-store" }),
       ]);
+      if (streamerResponse.ok) setStreamers((await streamerResponse.json()).streamers ?? []);
       if (channelResponse.ok) setChannels((await channelResponse.json()).channels ?? []);
       if (discoveryResponse.ok) setDiscoveries((await discoveryResponse.json()).discoveries ?? []);
     } catch {
@@ -78,25 +88,53 @@ export function AutomationsView() {
     return () => window.clearInterval(timer);
   }, [load]);
 
-  async function addChannel(event: React.FormEvent) {
+  async function addStreamer(event: React.FormEvent) {
     event.preventDefault();
-    if (!url.trim() || adding) return;
-    setAdding(true);
+    if (!streamerName.trim() || addingStreamer) return;
+    setAddingStreamer(true);
     try {
-      const response = await fetch("/api/automations/channels", {
+      const response = await fetch("/api/automations/streamers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), allows_clips: allowsClips }),
+        body: JSON.stringify({ name: streamerName.trim() }),
       });
       if (!response.ok) {
         toast.error(await errorText(response, t("genericError")));
         return;
       }
-      setUrl("");
-      setAllowsClips(false);
+      setStreamerName("");
       await load();
     } finally {
-      setAdding(false);
+      setAddingStreamer(false);
+    }
+  }
+
+  async function removeStreamer(streamer: Streamer) {
+    if (!window.confirm(t("removeStreamerConfirm", { name: streamer.name }))) return;
+    const response = await fetch(`/api/automations/streamers/${streamer.id}`, { method: "DELETE" });
+    if (!response.ok) toast.error(await errorText(response, t("genericError")));
+    await load();
+  }
+
+  async function addChannel(event: React.FormEvent, streamer: Streamer) {
+    event.preventDefault();
+    const url = (urls[streamer.id] ?? "").trim();
+    if (!url || adding) return;
+    setAdding(streamer.id);
+    try {
+      const response = await fetch("/api/automations/channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, allows_clips: allowsByStreamer[streamer.id] ?? false, streamer_id: streamer.id }),
+      });
+      if (!response.ok) {
+        toast.error(await errorText(response, t("genericError")));
+        return;
+      }
+      setUrls((current) => ({ ...current, [streamer.id]: "" }));
+      await load();
+    } finally {
+      setAdding(null);
     }
   }
 
@@ -207,7 +245,7 @@ export function AutomationsView() {
                 <div className="min-w-0">
                   <p className="truncate font-medium">{discovery.title || discovery.video_id}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {discovery.channel_title}
+                    {discovery.streamer_name} · {PLATFORM_LABEL[discovery.channel_platform ?? "youtube"]}
                     {discovery.duration_seconds ? ` · ${minutes(discovery.duration_seconds)}` : ""}
                     {!discovery.allows_clips ? ` · ${t("notAllowedBadge")}` : ""}
                   </p>
@@ -227,61 +265,94 @@ export function AutomationsView() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">{t("addTitle")}</h2>
-        <form onSubmit={addChannel} className="space-y-3 rounded-xl border p-4">
-          <label className="block text-sm font-medium" htmlFor="channel-url">{t("urlLabel")}</label>
-          <Input id="channel-url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder={t("urlPlaceholder")} inputMode="url" />
-          <label className="flex items-start gap-2 text-sm">
-            <Checkbox checked={allowsClips} onCheckedChange={(value) => setAllowsClips(value === true)} className="mt-0.5" />
-            <span>
-              {t("allowsClips")}
-              <span className="block text-xs text-muted-foreground">{t("allowsHint")}</span>
-            </span>
-          </label>
-          <Button type="submit" disabled={adding || !url.trim()}>{adding ? t("adding") : t("add")}</Button>
+        <h2 className="mb-3 text-lg font-semibold">{t("streamersTitle")}</h2>
+        <form onSubmit={addStreamer} className="mb-4 flex flex-col gap-2 rounded-xl border p-4 sm:flex-row">
+          <label className="sr-only" htmlFor="streamer-name">{t("streamerName")}</label>
+          <Input id="streamer-name" value={streamerName} onChange={(event) => setStreamerName(event.target.value)} placeholder={t("streamerPlaceholder")} maxLength={80} />
+          <Button type="submit" disabled={addingStreamer || !streamerName.trim()}>{addingStreamer ? t("adding") : t("addStreamer")}</Button>
         </form>
-      </section>
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold">{t("following")}</h2>
-        {channels.length === 0 ? (
-          <p className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">{t("noChannels")}</p>
+        {streamers.length === 0 ? (
+          <p className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">{t("noStreamers")}</p>
         ) : (
-          <ul className="divide-y rounded-xl border">
-            {channels.map((channel) => (
-              <li key={channel.id} className="space-y-3 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <a href={channel.channel_url} target="_blank" rel="noreferrer" className="truncate font-medium hover:underline">
-                      {channel.title || channel.channel_url}
-                    </a>
-                    <p className="text-xs text-muted-foreground">
-                      {PLATFORM_LABEL[channel.platform ?? "youtube"]} · {checkedLabel(channel.last_checked_at)}
-                      {!channel.active ? ` · ${t("paused")}` : ""}
-                      {channel.pending_count > 0 ? ` · ${t("foundNew", { count: channel.pending_count })}` : ""}
-                    </p>
-                    {channel.last_error ? <p className="text-xs text-destructive">{channel.last_error}</p> : null}
+          <div className="space-y-4">
+            {streamers.map((streamer) => {
+              const own = channels.filter((channel) => channel.streamer_id === streamer.id);
+              return (
+                <div key={streamer.id} className="rounded-xl border">
+                  <div className="flex items-center justify-between gap-2 border-b p-4">
+                    <h3 className="truncate font-semibold">{streamer.name}</h3>
+                    <Button size="sm" variant="ghost" onClick={() => void removeStreamer(streamer)}>{t("removeStreamer")}</Button>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" disabled={busy === `check:${channel.id}`} onClick={() => void checkNow(channel)}>
-                      {busy === `check:${channel.id}` ? t("checking") : t("checkNow")}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void removeChannel(channel)}>{t("remove")}</Button>
-                  </div>
+                  {own.length === 0 ? (
+                    <p className="p-4 text-sm text-muted-foreground">{t("noChannels")}</p>
+                  ) : (
+                    <ul className="divide-y">
+                      {own.map((channel) => (
+                        <li key={channel.id} className="space-y-3 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <a href={channel.channel_url} target="_blank" rel="noreferrer" className="truncate font-medium hover:underline">
+                                {PLATFORM_LABEL[channel.platform ?? "youtube"]} · {channel.title || channel.channel_url}
+                              </a>
+                              <p className="text-xs text-muted-foreground">
+                                {checkedLabel(channel.last_checked_at)}
+                                {!channel.active ? ` · ${t("paused")}` : ""}
+                                {channel.pending_count > 0 ? ` · ${t("foundNew", { count: channel.pending_count })}` : ""}
+                              </p>
+                              {channel.last_error ? <p className="text-xs text-destructive">{channel.last_error}</p> : null}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" disabled={busy === `check:${channel.id}`} onClick={() => void checkNow(channel)}>
+                                {busy === `check:${channel.id}` ? t("checking") : t("checkNow")}
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => void removeChannel(channel)}>{t("remove")}</Button>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                            <label className="flex items-center gap-2">
+                              <Checkbox checked={channel.allows_clips} onCheckedChange={(value) => void patchChannel(channel, { allows_clips: value === true })} />
+                              {t("allowsClips")}
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <Checkbox checked={channel.active} onCheckedChange={(value) => void patchChannel(channel, { active: value === true })} />
+                              {t("active")}
+                            </label>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <form onSubmit={(event) => void addChannel(event, streamer)} className="space-y-3 border-t bg-muted/30 p-4">
+                    <label className="block text-sm font-medium" htmlFor={`channel-url-${streamer.id}`}>{t("urlLabel")}</label>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        id={`channel-url-${streamer.id}`}
+                        value={urls[streamer.id] ?? ""}
+                        onChange={(event) => setUrls((current) => ({ ...current, [streamer.id]: event.target.value }))}
+                        placeholder={t("urlPlaceholder")}
+                        inputMode="url"
+                      />
+                      <Button type="submit" disabled={adding === streamer.id || !(urls[streamer.id] ?? "").trim()}>
+                        {adding === streamer.id ? t("adding") : t("add")}
+                      </Button>
+                    </div>
+                    <label className="flex items-start gap-2 text-sm">
+                      <Checkbox
+                        checked={allowsByStreamer[streamer.id] ?? false}
+                        onCheckedChange={(value) => setAllowsByStreamer((current) => ({ ...current, [streamer.id]: value === true }))}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        {t("allowsClips")}
+                        <span className="block text-xs text-muted-foreground">{t("allowsHint")}</span>
+                      </span>
+                    </label>
+                  </form>
                 </div>
-                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                  <label className="flex items-center gap-2">
-                    <Checkbox checked={channel.allows_clips} onCheckedChange={(value) => void patchChannel(channel, { allows_clips: value === true })} />
-                    {t("allowsClips")}
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <Checkbox checked={channel.active} onCheckedChange={(value) => void patchChannel(channel, { active: value === true })} />
-                    {t("active")}
-                  </label>
-                </div>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         )}
       </section>
     </div>

@@ -168,6 +168,10 @@
     "trailer": {
       "label": "预告",
       "hint": "一段短预告，让人想看完整视频"
+    },
+    "subjects": {
+      "label": "主题",
+      "hint": "每个反复出现的主题剪成一条"
     }
   },
   "subtitleByWorkflow": {
@@ -175,14 +179,16 @@
     "series": "丢进一段长视频，拿回一套编好号、让人一集接一集看下去的系列。",
     "topic": "丢进一段长视频，拿回所有关于你这个话题的精彩时刻。",
     "recap": "丢进一段长视频，拿回一段讲清主要观点的短视频。",
-    "trailer": "丢进一段长视频，拿回一段让人想看完整版的短预告。"
+    "trailer": "丢进一段长视频，拿回一段让人想看完整版的短预告。",
+    "subjects": "放入长视频，为反复出现的每个主题生成一条剪辑。"
   },
   "generateByWorkflow": {
     "highlights": "生成片段",
     "series": "生成系列",
     "topic": "查找精彩时刻",
     "recap": "制作回顾",
-    "trailer": "制作预告"
+    "trailer": "制作预告",
+    "subjects": "拆分主题"
   },
   "topic": {
     "placeholder": "什么话题？例如：创业",
@@ -231,7 +237,8 @@
       "series": "有什么特别要求？例如：重点讲第一次创业的故事",
       "topic": "有什么特别要求？例如：只要实用建议，不要个人故事",
       "recap": "有什么特别要求？例如：重点放在理财建议上",
-      "trailer": "有什么特别要求？例如：保持神秘感，突出冲突"
+      "trailer": "有什么特别要求？例如：保持神秘感，突出冲突",
+      "subjects": "有特别要求吗？例如：跳过开场，只要搞笑主题"
     }
   },
   "urlRescue": {
@@ -245,13 +252,15 @@
     "seriesCount": "改做 {count} 集系列？",
     "topic": "改为查找所有关于“{topic}”的片段？",
     "recap": "改做回顾？",
-    "trailer": "改做预告？"
+    "trailer": "改做预告？",
+    "subjects": "按主题各剪一条怎么样？"
   },
   "tooShort": {
     "series": "这个视频只有 {duration}。系列至少需要 2 分钟，这里更适合用精彩片段。",
     "recap": "这个视频只有 {duration}。回顾适用于 3 分钟以上的视频。",
     "trailer": "这个视频只有 {duration}。预告适用于 3 分钟以上的视频。",
     "topic": "这个视频只有 {duration}。话题查找至少需要 1 分钟。",
+    "subjects": "该视频时长 {duration}。主题功能适用于超过 5 分钟的视频。",
     "useHighlights": "改用精彩片段"
   },
   "workflowErrors": {
@@ -266,6 +275,7 @@
     "SOURCE_TOO_SHORT_FOR_RECAP": "这个视频本来就很短。回顾适用于 3 分钟以上的视频。",
     "SOURCE_TOO_SHORT_FOR_TRAILER": "预告适用于 3 分钟以上的视频。",
     "SOURCE_TOO_SHORT_FOR_TOPIC": "这个视频太短，没法按话题查找。试试精彩片段吧。",
+    "SOURCE_TOO_SHORT_FOR_SUBJECTS": "主题功能适用于超过 5 分钟的视频。试试精彩片段。",
     "WORKFLOW_NOT_AVAILABLE": "你的账户暂时还不能使用这个选项。",
     "INVALID_WORKFLOW_SETTING": "不支持该高级设置。"
   },
@@ -273,7 +283,8 @@
     "series": "新建系列",
     "topic": "新建话题查找",
     "recap": "新建回顾",
-    "trailer": "新建预告"
+    "trailer": "新建预告",
+    "subjects": "新建主题"
   },
   "advanced": {
     "chip": "高级",
@@ -290,6 +301,10 @@
       "junction_style": {
         "label": "片段之间的剪辑",
         "hint": "片段的衔接方式。"
+      },
+      "style": {
+        "label": "剪辑风格",
+        "hint": "要寻找哪类片段。"
       },
       "cold_open": {
         "label": "冷开场",
@@ -349,6 +364,10 @@
       "broad": "允许相近的匹配",
       "strict": "只要完全相符的主题",
       "relaxed": "允许",
+      "humor": "搞笑",
+      "drama": "戏剧",
+      "hype": "高能",
+      "educational": "知识向",
       "question": "一个问题"
     }
   }

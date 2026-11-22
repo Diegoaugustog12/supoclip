@@ -4,7 +4,7 @@ The mixin uses TaskService's repositories, configuration, and cache key contract
 """
 
 from ..repositories.edit_transaction import serialized_task_edit
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Sequence, Tuple
 import logging
 from pathlib import Path
 import copy
@@ -41,6 +41,8 @@ from ..clip_source_map import (
 )
 
 from ..media_storage import MediaStorage
+from ..workflows.durations import SHORTEN_CHOICES
+from ..workflows.subjects import output_windows, shorten_ranges
 from ..youtube_source import (
     load_time_map,
     local_ranges_for,
@@ -154,6 +156,16 @@ def _narrow_planned_meta(meta: Dict[str, Any], pieces: list, offsets: list) -> O
                 if isinstance(item, dict) and item.get("range_index") in kept
             ]
     return result
+
+
+def _moment_in_ranges(moment: Dict[str, Any], source_ranges: Sequence[Tuple[float, float]]) -> bool:
+    """True when most of a beat's span is covered by the clip's source ranges."""
+    try:
+        start, end = float(moment["range"][0]), float(moment["range"][1])
+    except (KeyError, TypeError, ValueError, IndexError):
+        return False
+    covered = sum(max(0.0, min(b, end) - max(a, start)) for a, b in source_ranges)
+    return end > start and covered >= 0.5 * float(moment.get("seconds") or (end - start))
 
 
 class ClipEditingMixin:
@@ -678,6 +690,103 @@ class ClipEditingMixin:
         await self.clip_repo.reorder_task_clips(self.db, task_id)
         return {"message": "Clip split successfully"}
 
+
+    @serialized_task_edit
+    async def shorten_clip(self, task_id: str, clip_id: str, max_seconds: int) -> Dict[str, Any]:
+        """A shorter copy of a subject compilation: its strongest beats within ``max_seconds``.
+
+        The original stays as it is, so the creator can still download it whole.
+        """
+        clip = await self.clip_repo.get_clip_by_id(self.db, clip_id)
+        if not clip or clip["task_id"] != task_id:
+            raise ValueError("Clip not found")
+        meta = clip.get("workflow_meta") or {}
+        if clip.get("workflow_role") != "subject" or not meta.get("moments"):
+            raise ValueError("Only subject clips can be shortened")
+        if max_seconds not in SHORTEN_CHOICES:
+            raise ValueError(f"max_seconds must be one of {', '.join(str(v) for v in SHORTEN_CHOICES)}")
+        if float(clip["duration"]) <= max_seconds + 0.5:
+            raise ValueError("This clip is already within that length")
+
+        input_path = await run_in_thread(MediaStorage().local_path, clip["file_path"])
+        if not input_path.exists():
+            raise ValueError("Clip file not found")
+
+        source_ranges = await run_in_thread(self._get_clip_source_ranges, clip)
+        # Only beats that are really in the rendered file can be kept (a render can end early).
+        present = [moment for moment in meta["moments"] if _moment_in_ranges(moment, source_ranges)]
+        chosen = shorten_ranges(present, float(max_seconds))
+        if not chosen:
+            raise ValueError("Nothing in this clip fits that length")
+        offsets = load_clip_output_offsets(input_path, source_ranges)
+        total = max(offset + b - a for offset, (a, b) in zip(offsets, source_ranges))
+        windows = output_windows(source_ranges, offsets, chosen)
+        if not windows:
+            raise ValueError("Nothing in this clip fits that length")
+
+        out_dir = Path(self.config.temp_dir) / "clips"
+        pieces = [
+            await run_in_thread(trim_clip_file, input_path, out_dir, start, max(0.0, total - end))
+            for start, end in windows
+        ]
+        output_path = pieces[0] if len(pieces) == 1 else await run_in_thread(merge_clip_files, pieces, out_dir)
+
+        new_ranges: list = []
+        new_offsets: list = []
+        cursor = 0.0
+        for start, end in windows:
+            sliced, mapped = slice_source_timeline(source_ranges, start, end, offsets)
+            new_ranges += sliced
+            new_offsets += [cursor + value for value in mapped]
+            cursor += end - start
+        bounds = source_range_bounds(new_ranges)
+        if not bounds:
+            raise ValueError("Shortened clip has no remaining source mapping")
+        save_clip_source_ranges(output_path, new_ranges, new_offsets)
+        input_settings = load_clip_caption_settings(input_path)
+        if input_settings:
+            save_clip_caption_settings(output_path, input_settings)
+        duration = max(0.1, await run_in_thread(rendered_clip_duration, output_path, new_ranges))
+
+        starts = [float(item[0]) for item in chosen]
+        kept = [
+            moment
+            for moment in present
+            if any(abs(float(moment["range"][0]) - start) < 0.05 for start in starts)
+        ]
+        new_meta = {
+            **_unplanned_meta(meta),
+            "moments": kept,
+            "moment_count": len(kept),
+            "shortened_to": max_seconds,
+            "parent_clip_id": clip_id,
+        }
+        order = clip.get("clip_order", 1) + 1
+        await self.clip_repo.make_room_for_clip(self.db, task_id, order)
+        new_id = await self.clip_repo.create_clip(
+            self.db,
+            task_id=task_id,
+            filename=output_path.name,
+            file_path=str(output_path),
+            start_time=self._seconds_to_mmss(bounds[0]),
+            end_time=self._seconds_to_mmss(bounds[1]),
+            duration=duration,
+            text=clip.get("text") or "",
+            relevance_score=clip.get("relevance_score", 0.5),
+            reasoning=clip.get("reasoning") or "",
+            clip_order=order,
+            virality_score=clip.get("virality_score", 0),
+            hook_score=clip.get("hook_score", 0),
+            engagement_score=clip.get("engagement_score", 0),
+            value_score=clip.get("value_score", 0),
+            shareability_score=clip.get("shareability_score", 0),
+            hook_type=clip.get("hook_type"),
+            hook_title=clip.get("hook_title"),
+            workflow_role="subject",
+            workflow_meta=new_meta,
+        )
+        await self.clip_repo.reorder_task_clips(self.db, task_id)
+        return {"message": "Clip shortened", "clip_id": new_id, "duration": duration}
 
     @serialized_task_edit
     async def merge_clips(self, task_id: str, clip_ids: list[str]) -> Dict[str, Any]:

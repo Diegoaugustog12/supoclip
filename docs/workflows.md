@@ -1,6 +1,6 @@
 # Workflows
 
-A task makes one of five things, stored as `tasks.workflow`:
+A task makes one of six things, stored as `tasks.workflow`:
 
 | `workflow` | Output |
 |---|---|
@@ -9,6 +9,7 @@ A task makes one of five things, stored as `tasks.workflow`:
 | `topic` | Every strong standalone moment about a typed topic. Off-topic moments are never added. |
 | `recap` | One clip stitched from several source ranges, covering the main points in order. |
 | `trailer` | One short clip of beats that builds curiosity and never reveals the payoff. |
+| `subjects` | One compilation per recurring subject (every beat of that subject, in source order, at its original length). A compilation can be shortened afterwards. |
 
 Free-text `instructions` steer any workflow, highlights included. Highlights
 without instructions or settings keeps the pipeline from before workflows: same
@@ -124,6 +125,20 @@ Download and transcription are shared with highlights. After that:
      their edges, and reranked. No source line plays twice. Off-topic moments
      are never added; nothing qualifying fails with `topic_not_found` and
      suggested topics. Under 45 s of material is `coverage: thin`.
+   - **Subjects** (`subjects.py`): one call finds the subjects that keep coming back (3-10, each
+     specific enough to say whether a moment belongs); every 12-minute window is then read with
+     that list and returns beats (unit ranges, a strength, a title). Code gates each beat (whole
+     sentences, 4-300 s, strength 45+), makes sure no line plays in two subjects (the stronger
+     beat keeps it), joins touching beats, and drops a subject with under 15 s or caps one at
+     20 min. Each subject becomes one clip (`workflow_role: "subject"`, `workflow_meta.moments`
+     with the source range, strength and seconds of every beat), strongest first. No length
+     limit applies: `SUBJECT_RENDER_HARD_MAX_SECONDS` (30 min) replaces the 185 s render cap for
+     this role only. `subjects_not_found` (refunded) when nothing qualifies.
+     **Shorten** (`POST /tasks/{id}/clips/{clip_id}/shorten {"max_seconds": 15|30|60|120}`,
+     `ClipEditingMixin.shorten_clip`): `shorten_ranges` keeps the strongest beats that fit, in
+     source order (a single longer beat is cut to its opening); the rendered clip is sliced and
+     joined, and saved as a NEW clip after the original (`workflow_meta.parent_clip_id`,
+     `shortened_to`). The original is never changed.
    - **Recap** (`recap.py`, `assembly.py`): a spine, an opener, the main points
      in source order and a closer, each with a full and a core span and an
      optional setup; a knapsack fits them to the total length, then a reader
@@ -243,6 +258,7 @@ screen's **Advanced** popover renders whatever it gets.
 | recap | `target_seconds` | auto | 30-150 | Replaces the length chip. The window stays 0.85-1.15 T. |
 | recap | `max_points` | auto | 2-12 | Most points, opener and closer aside. Holds even when the recap ends up under its window. |
 | recap | `coverage` | `whole_video` | `whole_video`, `best_moments` | `whole_video`: see below. |
+| subjects | `max_clips` | auto | 1-10 | Most subjects (compilations) returned. |
 | trailer | `target_seconds` | auto | 20-60 | Replaces the length chip. |
 | trailer | `spoilers` | `strict` | `strict`, `relaxed` | `relaxed` marks nothing off limits and ignores the judge's spoiler veto. |
 | trailer | `ending` | `auto` | `auto`, `question` | `question` asks the draft for a question button and re-picks one at the end; without one in the video the cut stays and `stats.fallbacks` records `TRAILER_NO_QUESTION_ENDING`. |

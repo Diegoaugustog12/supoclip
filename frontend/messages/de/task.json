@@ -18,7 +18,8 @@
   "toasts": {
     "settingsApplied": "Generierungseinstellungen übernommen",
     "cancelled": "Generierung abgebrochen",
-    "retryQueued": "Generierung zur Wiederholung eingereiht"
+    "retryQueued": "Generierung zur Wiederholung eingereiht",
+    "shortened": "Kürzere Version fertig"
   },
   "hooks": {
     "question": "Frage-Hook",
@@ -147,6 +148,7 @@
     "topic": "Thema: {topic}",
     "recap": "Zusammenfassung",
     "trailer": "Trailer",
+    "subjects": "Nach Thema",
     "seriesPending": "Serie"
   },
   "partOf": "Teil {n} von {total}",
@@ -174,6 +176,19 @@
   "sourceMoments": "Stellen im Original",
   "playFrom": "Ab {time} abspielen",
   "topicHeader": "Über {topic} · {count, plural, one {# Moment} other {# Momente}}",
+  "subjectsHeader": "{count, plural, one {# Thema} other {# Themen}}",
+  "subjectsHint": "Jeder Schnitt sammelt alle Momente eines Themas in Originallänge. Kürze ihn, wann du willst.",
+  "subjectVersions": "Kürzere Versionen",
+  "subjectUpTo": "Bis {length}",
+  "subjectRecommended": "Empfohlen",
+  "selectClip": "{title} auswählen",
+  "selectedCount": "{count} ausgewählt",
+  "downloadSelected": "Auswahl herunterladen",
+  "clearSelection": "Auswahl aufheben",
+  "subjectMoments": "{count, plural, one {# Moment} other {# Momente}}",
+  "subjectDownloadOriginal": "Original herunterladen",
+  "shorten": "Kürzen",
+  "shortenNamed": "{title} kürzen",
   "instructionsUsed": "Anweisungen",
   "stepsByWorkflow": {
     "series": {
@@ -191,6 +206,10 @@
     "trailer": {
       "finding": "Trailer wird geschrieben",
       "rendering": "Trailer wird geschnitten"
+    },
+    "subjects": {
+      "finding": "Themen werden gesucht",
+      "rendering": "Jedes Thema wird geschnitten"
     }
   },
   "workflowNotes": {
@@ -213,6 +232,11 @@
       "mentions": "Kurz erwähnt bei {times}.",
       "cta": "Stattdessen Highlights erstellen"
     },
+    "subjects_not_found": {
+      "title": "Kein Thema kommt oft genug wieder",
+      "body": "Wir konnten nicht genug Momente zu einem Thema für einen Schnitt sammeln. Deine Minuten wurden erstattet.",
+      "cta": "Stattdessen Highlights erstellen"
+    },
     "source_too_short": {
       "series": {
         "title": "Dieses Video ist zu kurz für eine Serie",
@@ -229,6 +253,10 @@
       "trailer": {
         "title": "Dieses Video ist zu kurz für einen Trailer",
         "body": "Trailer funktionieren bei Videos über 3 Minuten. Deine Minuten wurden erstattet."
+      },
+      "subjects": {
+        "title": "Dieses Video ist zu kurz für Themen",
+        "body": "Themen funktionieren bei Videos über 5 Minuten. Deine Minuten wurden erstattet."
       },
       "cta": "Stattdessen Highlights erstellen"
     },
@@ -298,6 +326,12 @@
     "error": "Gerade nicht möglich. Bitte erneut versuchen.",
     "copyText": "Text kopieren",
     "copyTags": "Hashtags kopieren",
-    "copyAll": "Alles kopieren"
-  }
+    "copyAll": "Alles kopieren",
+    "chars": "{count} Zeichen",
+    "trending": "Auf YouTube aktuell angesagte Hashtags zu diesem Thema",
+    "loadingHint": "Die Beschreibung wird geschrieben. Das kann ein paar Sekunden dauern.",
+    "hooks": "Alternative Hooks",
+    "copyHook": "Kopieren"
+  },
+  "scheduleSelected": "Auswahl planen"
 }

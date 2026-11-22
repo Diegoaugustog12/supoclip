@@ -31,13 +31,15 @@
       "series": "Seri · {count, plural, one {# bagian} other {# bagian}}",
       "topic": "Topik · {count, plural, one {# momen} other {# momen}}",
       "recap": "Ringkasan",
-      "trailer": "Trailer"
+      "trailer": "Trailer",
+      "subjects": "Topik · {count, plural, other {# potongan}}"
     },
     "findingByWorkflow": {
       "series": "Memetakan cerita…",
       "topic": "Mencari momen tentang topikmu…",
       "recap": "Memilih poin utama…",
-      "trailer": "Menulis trailer…"
+      "trailer": "Menulis trailer…",
+      "subjects": "Mencari topik…"
     }
   },
   "title": "Pustaka",

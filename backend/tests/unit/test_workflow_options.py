@@ -77,7 +77,7 @@ def test_every_workflow_parses(workflow):
 def test_unknown_workflow_is_rejected_never_coerced(value):
     error = rejected({"workflow": value})
     assert (error.code, error.status) == ("INVALID_WORKFLOW", 422)
-    assert error.message == "Unknown workflow. Use highlights, series, topic, recap or trailer."
+    assert error.message == "Unknown workflow. Use highlights, series, topic, recap, trailer or subjects."
 
 
 @pytest.mark.parametrize("value", ["topic", 3, ["a"]])
@@ -584,6 +584,12 @@ def test_workflows_info_matches_the_contract():
                 "min_source_seconds": 180,
                 "lengths": {"auto": 30, "short": 20, "medium": 40, "long": 60},
             },
+            {
+                "id": "subjects",
+                "available": True,
+                "min_source_seconds": 300,
+                "shorten_choices": [15, 30, 60, 120],
+            },
         ],
         "topic_max_chars": 120,
         "instructions_max_chars": 500,
@@ -595,7 +601,7 @@ def test_disabled_workflows_info_only_offers_highlights():
     info = workflows_info(frozenset())
     assert info["enabled"] is False
     assert {item["id"]: item["available"] for item in info["workflows"]} == {
-        "highlights": True, "series": False, "topic": False, "recap": False, "trailer": False,
+        "highlights": True, "series": False, "topic": False, "recap": False, "trailer": False, "subjects": False,
     }
 
 

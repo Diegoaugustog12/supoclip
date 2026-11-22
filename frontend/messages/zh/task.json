@@ -18,7 +18,8 @@
   "toasts": {
     "settingsApplied": "已应用生成设置",
     "cancelled": "已取消生成",
-    "retryQueued": "已将生成任务加入重试队列"
+    "retryQueued": "已将生成任务加入重试队列",
+    "shortened": "较短版本已生成"
   },
   "hooks": {
     "question": "提问钩子",
@@ -147,6 +148,7 @@
     "topic": "话题：{topic}",
     "recap": "回顾",
     "trailer": "预告",
+    "subjects": "按主题",
     "seriesPending": "系列"
   },
   "partOf": "第 {n} 集，共 {total} 集",
@@ -174,6 +176,19 @@
   "sourceMoments": "原视频片段",
   "playFrom": "从 {time} 播放",
   "topicHeader": "关于{topic} · {count, plural, one {# 个片段} other {# 个片段}}",
+  "subjectsHeader": "{count, plural, other {# 个主题}}",
+  "subjectsHint": "每条剪辑汇集一个主题的所有片段，保持原始时长。需要时随时缩短。",
+  "subjectVersions": "较短版本",
+  "subjectUpTo": "最长 {length}",
+  "subjectRecommended": "推荐",
+  "selectClip": "选择 {title}",
+  "selectedCount": "已选择 {count} 项",
+  "downloadSelected": "下载所选",
+  "clearSelection": "清除选择",
+  "subjectMoments": "{count, plural, other {# 个片段}}",
+  "subjectDownloadOriginal": "下载原版",
+  "shorten": "缩短",
+  "shortenNamed": "缩短 {title}",
   "instructionsUsed": "说明",
   "stepsByWorkflow": {
     "series": {
@@ -191,6 +206,10 @@
     "trailer": {
       "finding": "撰写预告",
       "rendering": "剪辑预告"
+    },
+    "subjects": {
+      "finding": "正在寻找主题",
+      "rendering": "正在剪辑每个主题"
     }
   },
   "workflowNotes": {
@@ -213,6 +232,11 @@
       "mentions": "在 {times} 处被简短提及。",
       "cta": "改为生成精彩片段"
     },
+    "subjects_not_found": {
+      "title": "没有主题出现得足够频繁",
+      "body": "我们没能为任何主题凑够足够的片段来剪辑。已退还您的分钟数。",
+      "cta": "改为生成精彩片段"
+    },
     "source_too_short": {
       "series": {
         "title": "这个视频太短，无法做成系列",
@@ -229,6 +253,10 @@
       "trailer": {
         "title": "这个视频太短，无法做成预告",
         "body": "预告适用于 3 分钟以上的视频。你的分钟数已退还。"
+      },
+      "subjects": {
+        "title": "该视频太短，无法按主题剪辑",
+        "body": "主题功能适用于超过 5 分钟的视频。已退还您的分钟数。"
       },
       "cta": "改为生成精彩片段"
     },
@@ -298,6 +326,12 @@
     "error": "暂时无法生成，请重试。",
     "copyText": "复制文案",
     "copyTags": "复制标签",
-    "copyAll": "全部复制"
-  }
+    "copyAll": "全部复制",
+    "chars": "{count} 个字符",
+    "trending": "该主题在 YouTube 上的热门话题标签",
+    "loadingHint": "正在撰写描述，可能需要几秒钟。",
+    "hooks": "备选开场钩子",
+    "copyHook": "复制"
+  },
+  "scheduleSelected": "定时发布所选"
 }

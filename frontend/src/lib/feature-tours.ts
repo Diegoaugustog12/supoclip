@@ -67,6 +67,11 @@ export const FEATURE_TOURS: readonly FeatureTour[] = [
     ],
   },
   {
+    id: "subjects",
+    releasedAt: "2026-11-19T00:00:00Z",
+    steps: [{ target: "workflow-subjects", message: "subjects", side: "bottom", workflow: "subjects" }],
+  },
+  {
     id: "composer-settings",
     releasedAt: "2026-11-06T00:00:00Z",
     steps: [{ target: "composer-settings", message: "settings", side: "top" }],

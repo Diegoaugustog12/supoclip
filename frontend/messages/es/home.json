@@ -168,6 +168,10 @@
     "trailer": {
       "label": "Tráiler",
       "hint": "Un adelanto corto que da ganas de ver el video completo"
+    },
+    "subjects": {
+      "label": "Asuntos",
+      "hint": "Un corte por cada asunto recurrente"
     }
   },
   "subtitleByWorkflow": {
@@ -175,14 +179,16 @@
     "series": "Suelta un video largo. Recibe una serie numerada que engancha de principio a fin.",
     "topic": "Suelta un video largo. Recibe cada momento fuerte sobre tu tema.",
     "recap": "Suelta un video largo. Recibe un video corto con los puntos principales.",
-    "trailer": "Suelta un video largo. Recibe un adelanto corto que da ganas de verlo completo."
+    "trailer": "Suelta un video largo. Recibe un adelanto corto que da ganas de verlo completo.",
+    "subjects": "Suelta un vídeo largo. Recibe un corte por cada asunto que vuelve a lo largo de él."
   },
   "generateByWorkflow": {
     "highlights": "Generar clips",
     "series": "Generar serie",
     "topic": "Buscar momentos",
     "recap": "Crear resumen",
-    "trailer": "Crear tráiler"
+    "trailer": "Crear tráiler",
+    "subjects": "Separar asuntos"
   },
   "topic": {
     "placeholder": "¿Qué tema? p. ej., cómo montar un negocio",
@@ -231,7 +237,8 @@
       "series": "¿Algo en concreto? p. ej., céntrate en la historia de la primera startup",
       "topic": "¿Algo en concreto? p. ej., solo consejos prácticos, sin historias personales",
       "recap": "¿Algo en concreto? p. ej., céntrate en los consejos de dinero",
-      "trailer": "¿Algo en concreto? p. ej., que tenga misterio, céntrate en el conflicto"
+      "trailer": "¿Algo en concreto? p. ej., que tenga misterio, céntrate en el conflicto",
+      "subjects": "¿Algo concreto? p. ej.: sin la introducción, solo los asuntos graciosos"
     }
   },
   "urlRescue": {
@@ -245,13 +252,15 @@
     "seriesCount": "¿Mejor una serie de {count} partes?",
     "topic": "¿Mejor buscar cada momento sobre “{topic}”?",
     "recap": "¿Mejor un resumen?",
-    "trailer": "¿Mejor un tráiler?"
+    "trailer": "¿Mejor un tráiler?",
+    "subjects": "¿Qué tal un corte por asunto?"
   },
   "tooShort": {
     "series": "Este video dura {duration}. Una serie necesita al menos 2 minutos. Aquí los Destacados funcionan muy bien.",
     "recap": "Este video dura {duration}. Los resúmenes funcionan con videos de más de 3 minutos.",
     "trailer": "Este video dura {duration}. Los tráileres funcionan con videos de más de 3 minutos.",
     "topic": "Este video dura {duration}. La búsqueda por tema necesita al menos 1 minuto.",
+    "subjects": "Este vídeo dura {duration}. Los asuntos funcionan con vídeos de más de 5 minutos.",
     "useHighlights": "Usar Destacados"
   },
   "workflowErrors": {
@@ -266,6 +275,7 @@
     "SOURCE_TOO_SHORT_FOR_RECAP": "Este video ya es corto. Los resúmenes funcionan con videos de más de 3 minutos.",
     "SOURCE_TOO_SHORT_FOR_TRAILER": "Los tráileres funcionan con videos de más de 3 minutos.",
     "SOURCE_TOO_SHORT_FOR_TOPIC": "Este video es demasiado corto para buscar por tema. Prueba con Destacados.",
+    "SOURCE_TOO_SHORT_FOR_SUBJECTS": "Los asuntos funcionan con vídeos de más de 5 minutos. Prueba Destacados.",
     "WORKFLOW_NOT_AVAILABLE": "Esta opción aún no está disponible en tu cuenta.",
     "INVALID_WORKFLOW_SETTING": "Ese ajuste avanzado no es compatible."
   },
@@ -273,7 +283,8 @@
     "series": "Nueva serie",
     "topic": "Nueva búsqueda por tema",
     "recap": "Nuevo resumen",
-    "trailer": "Nuevo tráiler"
+    "trailer": "Nuevo tráiler",
+    "subjects": "Nuevos asuntos"
   },
   "advanced": {
     "chip": "Avanzado",
@@ -290,6 +301,10 @@
       "junction_style": {
         "label": "Cortes entre secciones",
         "hint": "Cómo se unen las piezas de un clip."
+      },
+      "style": {
+        "label": "Estilo de edición",
+        "hint": "Qué tipo de momentos buscar."
       },
       "cold_open": {
         "label": "Apertura en frío",
@@ -349,6 +364,10 @@
       "broad": "Permitir una coincidencia cercana",
       "strict": "Solo el tema exacto",
       "relaxed": "Permitidos",
+      "humor": "Humor",
+      "drama": "Drama",
+      "hype": "Mucha energía",
+      "educational": "Educativo",
       "question": "Una pregunta"
     }
   }

@@ -21,7 +21,8 @@ from .utils.async_helpers import run_in_thread
 
 logger = logging.getLogger(__name__)
 
-MAX_WATCHES_PER_USER = 10
+MAX_WATCHES_PER_USER = 30
+MAX_STREAMERS_PER_USER = 20
 MAX_PENDING_PER_WATCH = 30
 CHECK_INTERVAL_MINUTES = 10
 DUE_BATCH = 25
@@ -189,6 +190,7 @@ def _watch_row(row: Any) -> Dict[str, Any]:
         "id": row.id,
         "channel_url": row.channel_url,
         "platform": platform_of(row.channel_url),
+        "streamer_id": row.streamer_id,
         "title": row.title,
         "allows_clips": bool(row.allows_clips),
         "active": bool(row.active),
@@ -202,6 +204,8 @@ def _discovery_row(row: Any) -> Dict[str, Any]:
     return {
         "id": row.id,
         "watch_id": row.watch_id,
+        "streamer_name": row.streamer_name,
+        "channel_platform": platform_of(row.channel_url),
         "channel_title": row.channel_title,
         "allows_clips": bool(row.allows_clips),
         "video_id": row.video_id,
@@ -215,12 +219,51 @@ def _discovery_row(row: Any) -> Dict[str, Any]:
 
 
 _WATCH_COLUMNS = (
-    "w.id, w.channel_url, w.title, w.allows_clips, w.active, w.last_checked_at, w.last_error, "
+    "w.id, w.streamer_id, w.channel_url, w.title, w.allows_clips, w.active, w.last_checked_at, w.last_error, "
     "(SELECT COUNT(*) FROM channel_discoveries d WHERE d.watch_id = w.id AND d.status = 'pending') AS pending_count"
 )
 
 
 class ChannelWatchService:
+    @staticmethod
+    async def list_streamers(db: AsyncSession, user_id: str) -> List[Dict[str, Any]]:
+        result = await db.execute(
+            text("SELECT id, name FROM streamers WHERE user_id = :u ORDER BY lower(name)"), {"u": user_id}
+        )
+        return [{"id": row.id, "name": row.name} for row in result.fetchall()]
+
+    @staticmethod
+    async def add_streamer(db: AsyncSession, user_id: str, raw_name: str) -> Dict[str, Any]:
+        name = " ".join((raw_name or "").split())[:80]
+        if not name:
+            raise WatchError("Type the streamer's name")
+        count = (await db.execute(text("SELECT COUNT(*) FROM streamers WHERE user_id = :u"), {"u": user_id})).scalar()
+        if int(count or 0) >= MAX_STREAMERS_PER_USER:
+            raise WatchError(f"You can follow up to {MAX_STREAMERS_PER_USER} streamers")
+        exists = (
+            await db.execute(
+                text("SELECT 1 FROM streamers WHERE user_id = :u AND lower(name) = lower(:n)"), {"u": user_id, "n": name}
+            )
+        ).fetchone()
+        if exists:
+            raise WatchError("You already added this streamer")
+        streamer_id = str(uuid4())
+        await db.execute(
+            text("INSERT INTO streamers (id, user_id, name) VALUES (:id, :u, :n)"),
+            {"id": streamer_id, "u": user_id, "n": name},
+        )
+        await db.commit()
+        return {"id": streamer_id, "name": name}
+
+    @staticmethod
+    async def delete_streamer(db: AsyncSession, user_id: str, streamer_id: str) -> bool:
+        """Removes the streamer together with its channels and their waiting videos."""
+        result = await db.execute(
+            text("DELETE FROM streamers WHERE id = :id AND user_id = :u"), {"id": streamer_id, "u": user_id}
+        )
+        await db.commit()
+        return bool(result.rowcount)
+
     @staticmethod
     async def list_watches(db: AsyncSession, user_id: str) -> List[Dict[str, Any]]:
         result = await db.execute(
@@ -239,8 +282,17 @@ class ChannelWatchService:
         return _watch_row(row) if row else None
 
     @staticmethod
-    async def add_watch(db: AsyncSession, user_id: str, raw_url: str, allows_clips: bool) -> Dict[str, Any]:
+    async def add_watch(
+        db: AsyncSession, user_id: str, raw_url: str, allows_clips: bool, streamer_id: str
+    ) -> Dict[str, Any]:
         url = normalize_channel_url(raw_url)
+        owned = (
+            await db.execute(
+                text("SELECT 1 FROM streamers WHERE id = :s AND user_id = :u"), {"s": streamer_id, "u": user_id}
+            )
+        ).fetchone()
+        if not owned:
+            raise WatchError("Streamer not found")
         count = (await db.execute(text("SELECT COUNT(*) FROM channel_watches WHERE user_id = :u"), {"u": user_id})).scalar()
         if int(count or 0) >= MAX_WATCHES_PER_USER:
             raise WatchError(f"You can follow up to {MAX_WATCHES_PER_USER} channels")
@@ -256,10 +308,10 @@ class ChannelWatchService:
         watch_id = str(uuid4())
         await db.execute(
             text(
-                "INSERT INTO channel_watches (id, user_id, channel_url, title, allows_clips, last_checked_at) "
-                "VALUES (:id, :u, :url, :title, :allows, CURRENT_TIMESTAMP)"
+                "INSERT INTO channel_watches (id, user_id, streamer_id, channel_url, title, allows_clips, last_checked_at) "
+                "VALUES (:id, :u, :sid, :url, :title, :allows, CURRENT_TIMESTAMP)"
             ),
-            {"id": watch_id, "u": user_id, "url": url, "title": latest["title"], "allows": allows_clips},
+            {"id": watch_id, "u": user_id, "sid": streamer_id, "url": url, "title": latest["title"], "allows": allows_clips},
         )
         await ChannelWatchService._store(db, watch_id, user_id, latest["videos"], status="baseline")
         await db.commit()
@@ -363,9 +415,10 @@ class ChannelWatchService:
     async def list_discoveries(db: AsyncSession, user_id: str, status: str = "pending") -> List[Dict[str, Any]]:
         result = await db.execute(
             text(
-                "SELECT d.id, d.watch_id, w.title AS channel_title, w.allows_clips, d.video_id, d.url, d.title, "
-                "d.duration_seconds, d.status, d.task_id, d.created_at "
+                "SELECT d.id, d.watch_id, w.channel_url, COALESCE(s.name, w.title) AS streamer_name, w.title AS channel_title, "
+                "w.allows_clips, d.video_id, d.url, d.title, d.duration_seconds, d.status, d.task_id, d.created_at "
                 "FROM channel_discoveries d JOIN channel_watches w ON w.id = d.watch_id "
+                "LEFT JOIN streamers s ON s.id = w.streamer_id "
                 "WHERE d.user_id = :u AND d.status = :s ORDER BY d.created_at DESC LIMIT 100"
             ),
             {"u": user_id, "s": status},

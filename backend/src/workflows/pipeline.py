@@ -25,6 +25,7 @@ from .outline import get_outline
 from .planning import PlanInput, apply_output_settings, plan_language
 from .recap import plan_recap
 from .series import plan_series
+from .subjects import plan_subjects
 from .topic import plan_topic
 from .trailer import plan_trailer
 from .units import build_units
@@ -38,6 +39,7 @@ PLANNERS: dict[str, Planner] = {
     "topic": plan_topic,
     "recap": plan_recap,
     "trailer": plan_trailer,
+    "subjects": plan_subjects,
 }
 
 _PLAN_FAILED = "The AI editor couldn't finish this plan. Please try again."

@@ -350,7 +350,7 @@ Personalized analyses skip the shared `processing_cache` analysis entry.
 
 ### Automations (followed channels)
 
-`/automations` (nav "Automações"): the user follows YouTube, Twitch and Kick channels (`channel_watches`, max 10; platform comes from the URL host, `platform_of`). Worker cron
+`/automations` (nav "Automações"): the user adds streamers (`streamers`, max 20) and, inside each, their YouTube, Twitch and Kick channels (`channel_watches.streamer_id`, max 30 channels; platform comes from the URL host, `platform_of`). Worker cron
 `check_channel_watches` (every 5 min, each channel at most every 10) reads YouTube `/videos` and `/streams` (Twitch: past broadcasts; Kick: `/videos`) with yt-dlp
 `extract_flat` (`channel_watch.fetch_latest`; live and upcoming are skipped until they end). Videos already there at
 follow time are stored as `baseline`; later ones become `pending` rows in `channel_discoveries`. **Nothing is clipped

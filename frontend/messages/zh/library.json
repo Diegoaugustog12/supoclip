@@ -31,13 +31,15 @@
       "series": "系列 · {count, plural, one {# 集} other {# 集}}",
       "topic": "话题 · {count, plural, one {# 个片段} other {# 个片段}}",
       "recap": "回顾",
-      "trailer": "预告"
+      "trailer": "预告",
+      "subjects": "主题 · {count, plural, other {# 条剪辑}}"
     },
     "findingByWorkflow": {
       "series": "正在梳理故事线…",
       "topic": "正在寻找与你的话题相关的片段…",
       "recap": "正在挑选要点…",
-      "trailer": "正在撰写预告…"
+      "trailer": "正在撰写预告…",
+      "subjects": "正在寻找主题…"
     }
   },
   "title": "资料库",

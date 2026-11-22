@@ -29,7 +29,7 @@ describe("feature tours", () => {
   });
 
   it("doesn't repeat what an earlier tour already explained", () => {
-    expect(dueTours(BEFORE, ["workflows"])).toEqual([]);
+    expect(dueTours(BEFORE, ["workflows", "subjects"])).toEqual([]);
   });
 
   it("is for accounts older than the feature, once each", () => {

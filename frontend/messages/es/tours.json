@@ -46,5 +46,11 @@
       "body": "Duración, subtítulos, encuadre, limpieza y B-roll ahora están en un solo menú. Recordamos tus elecciones, así que solo las configuras una vez."
     }
   },
+  "subjects": {
+    "subjects": {
+      "title": "Nuevo: Asuntos",
+      "body": "Elige Asuntos para dividir un vídeo largo por lo que se repite, como cada vez que alguien pierde la paciencia o un chiste recurrente. Recibes un corte por asunto con su duración original y luego puedes acortarlo a 15 s, 30 s, 1 o 2 min."
+    }
+  },
   "skip": "Omitir"
 }

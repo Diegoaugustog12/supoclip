@@ -46,6 +46,8 @@ import {
   Check,
   Clapperboard,
   Clock,
+  CalendarClock,
+  Download,
   Edit2,
   ExternalLink,
   Link2Off,
@@ -65,6 +67,8 @@ import Link from "next/link";
 import { ClipTile, ClipFocus, ProcessingPanel, ProcessingSlots, EmptyState, clipProgressFromMessage, sourceTimestamp } from "@/components/app/clip-wall";
 import { orderedParts, seriesPartTotal, SeriesView, unfinishedSeries } from "@/components/app/series-view";
 import { HeroClipView } from "@/components/app/hero-clip-view";
+import { SubjectsView } from "@/components/app/subjects-view";
+import { clipDownloadName } from "@/lib/clip-download-name";
 import { DownloadAllButton } from "@/components/app/download-all-button";
 import { CaptionLater } from "@/components/app/caption-later";
 import { buildRecreateBody, createActionId, isWorkflowErrorCode, WorkflowFailure } from "@/components/app/workflow-failure";
@@ -74,6 +78,7 @@ import { timeAgoLabel } from "@/lib/generations";
 import { VIDEO_SOURCE_LABELS, VideoSourceIcon, videoSourceKind, type VideoSourceKind } from "@/components/video-source-icon";
 import { cn } from "@/lib/utils";
 import { FontSelectOption, type FontOption } from "@/components/font-select-option";
+import { BatchScheduleDialog, schedulableConnections } from "@/components/batch-schedule";
 import { ClipPostList, ClipPublishButton, useSocialPostToasts } from "@/components/clip-publisher";
 import {
   ACTIVE_POST_STATUSES,
@@ -239,11 +244,14 @@ export default function TaskPage() {
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [billingSummary] = useBillingSummary(Boolean(session?.user?.id));
   const [upgradeReason, setUpgradeReason] = useState<UpgradeReason | null>(null);
+  const [batchOpen, setBatchOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"score" | "timeline">("score");
   // The first load picks the workflow's default order; after that the user's choice stays.
   const sortChosen = useRef(false);
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [isDownloadingSelected, setIsDownloadingSelected] = useState(false);
 
   const taskApiUrl = "/api/tasks";
 
@@ -628,7 +636,7 @@ export default function TaskPage() {
     });
     triggerFileDownload(
       clipExportFilePath(taskApiUrl, taskId, clipId, job.id),
-      `${fallbackFilename.replace(/\.mp4$/i, "")}_${exportPreset}.mp4`,
+      fallbackFilename,
     );
     void trackClipExport({ userId: session.user.id, surface: "task", format: exportPreset });
   };
@@ -637,7 +645,7 @@ export default function TaskPage() {
     const link = document.createElement("a");
     const url = getClipUrl(clip.video_url, clip.filename);
     link.href = `${url}${url.includes("?") ? "&" : "?"}download=true`;
-    link.download = clip.filename;
+    link.download = clipDownloadName(clip);
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -649,7 +657,35 @@ export default function TaskPage() {
       downloadOriginal(clip);
       return;
     }
-    void runAction(clip.id, () => handleExportClip(clip.id, clip.filename));
+    void runAction(clip.id, () => handleExportClip(clip.id, clipDownloadName(clip, `_${exportPreset}`)));
+  };
+
+  const toggleSelected = (clip: { id: string }) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (!next.delete(clip.id)) next.add(clip.id);
+      return next;
+    });
+  };
+
+  // The picked clips as one ZIP, built from the same stream as "download all".
+  const handleDownloadSelected = async () => {
+    if (!task?.id || isDownloadingSelected || selectedIds.size === 0) return;
+    setIsDownloadingSelected(true);
+    try {
+      await downloadAllClips({
+        taskApiUrl,
+        taskId: task.id,
+        clipIds: Array.from(selectedIds),
+        readError: (response) => buildSupportError(response, t("errors.downloadAll")),
+        fallbackMessage: t("errors.downloadAll"),
+      });
+      if (session?.user?.id) void trackClipExport({ userId: session.user.id, surface: "task", format: "zip" });
+    } catch (downloadError) {
+      toast.error(downloadError instanceof Error ? downloadError.message : t("errors.downloadAll"));
+    } finally {
+      setIsDownloadingSelected(false);
+    }
   };
 
   const handleDownloadAll = async () => {
@@ -669,6 +705,16 @@ export default function TaskPage() {
     } finally {
       setIsDownloadingAll(false);
     }
+  };
+
+  // A shorter copy of a subject compilation: the original stays, the copy joins the list.
+  const handleShortenClip = (clip: Clip, seconds: number) => {
+    if (!task) return;
+    void runAction(`shorten:${clip.id}`, async () => {
+      await requestAction(`${taskApiUrl}/${task.id}/clips/${clip.id}/shorten`, "POST", { max_seconds: seconds });
+      await fetchTaskStatus(0, 0, true);
+      toast.success(t("toasts.shortened"));
+    });
   };
 
   const handleResume = () => {
@@ -773,8 +819,9 @@ export default function TaskPage() {
   const workflow = taskWorkflow(task);
   const plan = task?.workflow_plan ?? null;
   const isSeries = workflow === "series";
+  const isSubjects = workflow === "subjects";
   // Series keep story order and recaps/trailers are one video, so only highlights and topic clips sort.
-  const sortable = !isSeries && !SINGLE_OUTPUT.has(workflow);
+  const sortable = !isSeries && !isSubjects && !SINGLE_OUTPUT.has(workflow);
   const sortedClips = isSeries
     ? orderedParts(clips)
     : sortable && sortBy === "score"
@@ -836,6 +883,9 @@ export default function TaskPage() {
       busy={pendingAction === clip.id}
       best={bestScore > 0 && clip.virality_score === bestScore}
       partTotal={partTotal}
+      selected={selectedIds.has(clip.id)}
+      selecting={selectedIds.size > 0}
+      onToggleSelect={task?.status === "completed" ? () => toggleSelected(clip) : undefined}
       onOpen={() => setFocusIndex(index)}
       onDownload={() => handleDownloadClip(clip)}
       onDelete={readOnly ? undefined : () => setDeletingClipId(clip.id)}
@@ -1043,6 +1093,22 @@ export default function TaskPage() {
             onDownloadAll={() => void handleDownloadAll()}
             onResume={readOnly ? undefined : handleResume}
             resumeDisabled={pendingAction !== null}
+            renderActions={publishButton}
+          />
+        ) : isSubjects ? (
+          <SubjectsView
+            clips={sortedClips}
+            plan={plan}
+            taskId={task.id}
+            editable={task.status === "completed" && !readOnly}
+            busyId={pendingAction}
+            shorteningId={pendingAction?.startsWith("shorten:") ? pendingAction.split(":")[1] : null}
+            toolbar={formatSelect}
+            selectedIds={selectedIds}
+            onToggleSelect={task.status === "completed" ? toggleSelected : undefined}
+            onOpen={(clip) => setFocusIndex(sortedClips.findIndex((item) => item.id === clip.id))}
+            onDownload={handleDownloadClip}
+            onShorten={readOnly ? undefined : handleShortenClip}
             renderActions={publishButton}
           />
         ) : heroClip && SINGLE_OUTPUT.has(workflow) ? (
@@ -1339,6 +1405,33 @@ export default function TaskPage() {
         billing={billingSummary}
         source="task_resume"
       />
+      {task && (
+        <BatchScheduleDialog
+          taskId={task.id}
+          clipIds={clips.filter((clip) => selectedIds.has(clip.id)).map((clip) => clip.id)}
+          connections={socialConnections}
+          providers={socialProviders}
+          open={batchOpen}
+          onOpenChange={setBatchOpen}
+          onDone={() => { setSelectedIds(new Set()); void loadSocialPosts(); }}
+        />
+      )}
+      {selectedIds.size > 0 && (
+        <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+          <div role="region" aria-label={t("selectedCount", { count: selectedIds.size })} className="flex items-center gap-2 rounded-full border bg-background py-1.5 pl-4 pr-1.5 shadow-lg">
+            <span className="text-sm font-medium tabular-nums">{t("selectedCount", { count: selectedIds.size })}</span>
+            <Button size="sm" className="rounded-full" onClick={() => void handleDownloadSelected()} disabled={isDownloadingSelected}>
+              {isDownloadingSelected ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}{t("downloadSelected")}
+            </Button>
+            {task?.status === "completed" && schedulableConnections(socialConnections, socialProviders).length > 0 && (
+              <Button size="sm" variant="outline" className="rounded-full" onClick={() => setBatchOpen(true)}>
+                <CalendarClock className="size-4" />{t("scheduleSelected")}
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelectedIds(new Set())}>{t("clearSelection")}</Button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

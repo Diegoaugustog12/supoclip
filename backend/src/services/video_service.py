@@ -1716,6 +1716,9 @@ class VideoService:
                     raise ValueError("No usable footage remains after excluding interruption notices.")
             elif final_plan:
                 pass
+            elif workflow == "subjects":
+                # A compilation spans the whole video and has no short-form minimum to check against.
+                pass
             elif workflow == "series":
                 # Parts tell one story in order; a still picture is never a reason to skip one.
                 await run_in_thread(VideoService._log_static_parts, video_path, segments_json)

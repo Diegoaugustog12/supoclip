@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from ..clip_source_map import normalize_source_ranges, source_range_bounds
-from ..workflows.durations import WORKFLOW_RENDER_HARD_MAX_SECONDS
+from ..workflows.durations import SUBJECT_RENDER_HARD_MAX_SECONDS, WORKFLOW_RENDER_HARD_MAX_SECONDS
 from ..workflows.language import is_no_space
 from .common import logger
 from .ffmpeg import crossfade_fade_for_ranges
@@ -158,7 +158,9 @@ def _resolve_planned(
         fades = [float(value) for value in segment.get("junction_fades") or []]
         offsets = output_offsets_for_junctions(keep, groups, fades)
 
-    cap = min(float(segment.get("max_seconds") or max_clip_seconds), WORKFLOW_RENDER_HARD_MAX_SECONDS)
+    # A subject compilation keeps the source's timing; every other planned clip is short-form.
+    hard_max = SUBJECT_RENDER_HARD_MAX_SECONDS if segment.get("workflow_role") == "subject" else WORKFLOW_RENDER_HARD_MAX_SECONDS
+    cap = min(float(segment.get("max_seconds") or max_clip_seconds), hard_max)
     played = rendered_duration(keep, offsets)
     if keep and played > cap + 0.05:
         # Planners size every output inside its budget; reaching this is a planner bug.

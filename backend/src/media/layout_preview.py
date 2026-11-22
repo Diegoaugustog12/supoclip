@@ -2,12 +2,18 @@
 
 Only YouTube links are accepted (the host is checked by ``get_youtube_video_id``,
 so this cannot be pointed at arbitrary addresses). A video already in the
-cache is read from disk; otherwise yt-dlp resolves a low-resolution stream URL
-and ffmpeg reads a single frame from it, so nothing is downloaded in full.
+cache is read from disk; otherwise yt-dlp downloads only the few seconds the
+preview needs into a temp file, and ffmpeg reads that file.
+
+Reading the googlevideo stream URL straight from ffmpeg fails with 403, so the
+bytes are fetched by yt-dlp itself, the same way the pipeline downloads media.
 """
 
 import logging
+import os
+import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -21,17 +27,16 @@ FFMPEG_TIMEOUT = 45
 CLIP_SECONDS = 5
 CLIP_WIDTH = 854
 CLIP_TIMEOUT = 90
+DOWNLOAD_TIMEOUT = 120
 
 
 class PreviewError(Exception):
     """The frame could not be produced; the message is safe to show."""
 
 
-def _frame_from(source: str, seconds: float, headers: Optional[dict] = None) -> bytes:
-    command = ["ffmpeg", "-v", "error", "-y"]
-    if headers:
-        command += ["-headers", "".join(f"{k}: {v}\r\n" for k, v in headers.items())]
-    command += [
+def _frame_from(source: str, seconds: float) -> bytes:
+    command = [
+        "ffmpeg", "-v", "error", "-y",
         "-ss", f"{max(0.0, seconds):.2f}", "-i", source, "-frames:v", "1",
         "-vf", f"scale='min({PREVIEW_WIDTH},iw)':-2", "-f", "image2pipe",
         "-vcodec", "mjpeg", "-q:v", "3", "-",
@@ -54,36 +59,72 @@ def _cached_file(video_id: str) -> Optional[Path]:
     return files[0] if files else None
 
 
-def _stream_url(url: str) -> tuple:
-    import yt_dlp
+def _ydl_options(extra: dict) -> dict:
+    from ..youtube_cookies import with_cookies
+    from ..youtube_proxy import challenge_params
 
     options = {
-        "quiet": True, "no_warnings": True, "skip_download": True, "noplaylist": True,
+        "quiet": True, "no_warnings": True, "noplaylist": True,
         "format": "bv*[height<=720][ext=mp4]/bv*[height<=720]/b[height<=720]/b",
         "socket_timeout": 20,
+        **challenge_params(),
+        **extra,
     }
-    from ..youtube_cookies import with_cookies
+    return with_cookies(options)
+
+
+def _lookup_error(exc: Exception) -> PreviewError:
+    logger.warning("Preview lookup failed: %s", exc)
+    text = str(exc).lower()
+    if "sign in" in text or "age" in text and "confirm" in text:
+        return PreviewError(
+            "YouTube requires a login to open this video (age-restricted). "
+            "Download it and use the File option instead."
+        )
+    if "private" in text or "unavailable" in text:
+        return PreviewError("This video is private or unavailable")
+    return PreviewError("Could not open this YouTube video")
+
+
+def _video_duration(url: str) -> float:
+    import yt_dlp
 
     try:
-        with yt_dlp.YoutubeDL(with_cookies(options)) as ydl:
+        with yt_dlp.YoutubeDL(_ydl_options({"skip_download": True})) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as exc:
-        logger.warning("Preview stream lookup failed: %s", exc)
-        text = str(exc).lower()
-        if "sign in" in text or "age" in text and "confirm" in text:
-            raise PreviewError(
-                "YouTube requires a login to open this video (age-restricted). "
-                "Download it and use the File option instead."
-            ) from None
-        if "private" in text or "unavailable" in text:
-            raise PreviewError("This video is private or unavailable") from None
-        raise PreviewError("Could not open this YouTube video") from None
-    stream = info.get("url") or next(
-        (f.get("url") for f in reversed(info.get("requested_formats") or []) if f.get("url")), None
-    )
-    if not stream:
-        raise PreviewError("Could not open this YouTube video")
-    return stream, info.get("http_headers") or {}, float(info.get("duration") or 0)
+        raise _lookup_error(exc) from None
+    return float(info.get("duration") or 0)
+
+
+def _download_section(url: str, start: float, length: float) -> Path:
+    """Download ``length`` seconds from ``start`` into a temp dir; returns the file."""
+    import yt_dlp
+    from yt_dlp.utils import download_range_func
+
+    folder = Path(tempfile.mkdtemp(prefix="layout-preview-"))
+    options = _ydl_options({
+        "outtmpl": str(folder / "section.%(ext)s"),
+        "download_ranges": download_range_func(None, [(start, start + length)]),
+        "force_keyframes_at_cuts": True,
+        "overwrites": True,
+        "socket_timeout": 30,
+    })
+    try:
+        with yt_dlp.YoutubeDL(options) as ydl:
+            ydl.download([url])
+    except Exception as exc:
+        shutil.rmtree(folder, ignore_errors=True)
+        raise _lookup_error(exc) from None
+    files = [p for p in folder.iterdir() if p.is_file() and not p.name.endswith(".part")]
+    if not files:
+        shutil.rmtree(folder, ignore_errors=True)
+        raise PreviewError("Could not read a frame from this video")
+    return files[0]
+
+
+def _watch_url(video_id: str) -> str:
+    return f"https://www.youtube.com/watch?v={video_id}"
 
 
 def preview_frame(url: str, seconds: float) -> bytes:
@@ -94,18 +135,22 @@ def preview_frame(url: str, seconds: float) -> bytes:
     cached = _cached_file(video_id)
     if cached is not None:
         return _frame_from(str(cached), seconds)
-    stream, headers, duration = _stream_url(f"https://www.youtube.com/watch?v={video_id}")
+    watch = _watch_url(video_id)
+    duration = _video_duration(watch)
     if duration and seconds >= duration:
         seconds = max(0.0, duration - 1)
-    return _frame_from(stream, seconds, headers)
+    start = max(0.0, seconds - 0.5)
+    section = _download_section(watch, start, 2.0)
+    try:
+        return _frame_from(str(section), seconds - start)
+    finally:
+        shutil.rmtree(section.parent, ignore_errors=True)
 
 
-def _clip_from(source: str, seconds: float, headers: Optional[dict] = None) -> bytes:
+def _clip_from(source: str, seconds: float) -> bytes:
     """Five seconds as a fragmented MP4 (streamable through a pipe)."""
-    command = ["ffmpeg", "-v", "error", "-y"]
-    if headers:
-        command += ["-headers", "".join(f"{k}: {v}\r\n" for k, v in headers.items())]
-    command += [
+    command = [
+        "ffmpeg", "-v", "error", "-y",
         "-ss", f"{max(0.0, seconds):.2f}", "-i", source, "-t", str(CLIP_SECONDS), "-c:a", "aac", "-b:a", "96k",
         "-vf", f"scale='min({CLIP_WIDTH},iw)':-2", "-c:v", "libx264", "-preset", "veryfast",
         "-crf", "28", "-pix_fmt", "yuv420p", "-movflags", "frag_keyframe+empty_moov",
@@ -129,7 +174,12 @@ def preview_clip(url: str, seconds: float) -> bytes:
     cached = _cached_file(video_id)
     if cached is not None:
         return _clip_from(str(cached), seconds)
-    stream, headers, duration = _stream_url(f"https://www.youtube.com/watch?v={video_id}")
+    watch = _watch_url(video_id)
+    duration = _video_duration(watch)
     if duration and seconds >= duration:
         seconds = max(0.0, duration - CLIP_SECONDS)
-    return _clip_from(stream, seconds, headers)
+    section = _download_section(watch, max(0.0, seconds), CLIP_SECONDS)
+    try:
+        return _clip_from(str(section), 0.0)
+    finally:
+        shutil.rmtree(section.parent, ignore_errors=True)

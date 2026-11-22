@@ -14,8 +14,8 @@ from ..clip_duration import normalize_clip_length
 from .durations import SERIES_MAX_PARTS, SERIES_MIN_PARTS
 from .settings import SettingValue, default_of, read_settings
 
-WORKFLOWS: tuple[str, ...] = ("highlights", "series", "topic", "recap", "trailer")
-Workflow = Literal["highlights", "series", "topic", "recap", "trailer"]
+WORKFLOWS: tuple[str, ...] = ("highlights", "series", "topic", "recap", "trailer", "subjects")
+Workflow = Literal["highlights", "series", "topic", "recap", "trailer", "subjects"]
 WORKFLOW_PLAN_VERSION = "wf-v1"  # bump to invalidate cached plans (not transcripts)
 OUTLINE_VERSION = "outline-v2"  # bump to invalidate cached outlines
 

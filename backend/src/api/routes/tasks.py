@@ -73,6 +73,13 @@ import redis.asyncio as redis
 from ...clip_editor import export_with_preset, EXPORT_PRESETS
 
 logger = logging.getLogger(__name__)
+from ...services.clip_export_service import clip_download_stem, export_download_filename
+
+
+def clip_download_filename(clip: dict) -> str:
+    return export_download_filename(clip["filename"], "", clip_download_stem(clip))
+
+
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
@@ -461,6 +468,8 @@ def _public_workflow_plan(plan: Any) -> Optional[Dict[str, Any]]:
         public["points"] = _picked_list(plan["points"], ("label",))
     if "beats" in plan:
         public["beats"] = _picked_list(plan["beats"], ("role",))
+    if "subjects" in plan:
+        public["subjects"] = _picked_list(plan["subjects"], ("label", "moments", "seconds"))
     if "topic" in plan:
         public["topic"] = _pick(plan["topic"], ("query", "canonical", "coverage", "found"))
     return public
@@ -468,7 +477,7 @@ def _public_workflow_plan(plan: Any) -> Optional[Dict[str, Any]]:
 
 def _public_workflow_meta(meta: Any) -> Dict[str, Any]:
     """The share-safe subset of ``generated_clips.workflow_meta``."""
-    public = _pick(meta, ("title", "ends_on", "part_count"))
+    public = _pick(meta, ("title", "ends_on", "part_count", "subject"))
     if isinstance(meta, dict) and "points" in meta:
         public["points"] = _picked_list(meta["points"], ("label", "kind", "range_index", "output_start"))
     if isinstance(meta, dict) and "beats" in meta:
@@ -865,7 +874,7 @@ async def get_shared_clip_file(
 
     if is_s3(clip["file_path"]):
         await db.close()
-        url = await run_in_thread(MediaStorage().signed_url, clip["file_path"], clip["filename"], attachment=download)
+        url = await run_in_thread(MediaStorage().signed_url, clip["file_path"], clip_download_filename(clip), attachment=download)
         return RedirectResponse(url, status_code=307, headers={"Cache-Control": "private, no-store"})
     clip_path = Path(clip["file_path"])
     if not clip_path.exists():
@@ -874,7 +883,7 @@ async def get_shared_clip_file(
     return FileResponse(
         path=str(clip_path),
         media_type="video/mp4",
-        filename=clip["filename"],
+        filename=clip_download_filename(clip),
         content_disposition_type="attachment" if download else "inline",
         headers={"Cache-Control": "private, no-store"},
     )
@@ -1138,7 +1147,7 @@ async def get_clip_file(
 
         if is_s3(clip["file_path"]):
             await db.close()
-            url = await run_in_thread(MediaStorage().signed_url, clip["file_path"], clip["filename"], attachment=download)
+            url = await run_in_thread(MediaStorage().signed_url, clip["file_path"], clip_download_filename(clip), attachment=download)
             return RedirectResponse(url, status_code=307, headers={"Cache-Control": "private, no-store"})
         clip_path = Path(clip["file_path"])
         if not clip_path.exists():
@@ -1155,7 +1164,7 @@ async def get_clip_file(
         return FileResponse(
             path=str(clip_path),
             media_type="video/mp4",
-            filename=clip["filename"],
+            filename=clip_download_filename(clip),
             content_disposition_type="attachment" if download else "inline",
             headers={"Cache-Control": "private, no-store"},
         )
@@ -1166,11 +1175,15 @@ async def get_clip_file(
         raise HTTPException(status_code=500, detail=f"Error serving clip file: {str(e)}")
 
 
-async def _prepare_clip_archive(request: Request, db: AsyncSession, task_id: str):
+async def _prepare_clip_archive(request: Request, db: AsyncSession, task_id: str, ids: str = ""):
     """Authorize like a single-clip download and list the clip files that exist."""
     task_service = TaskService(db)
     user_id, task = await _authorize_task_reader(request, task_service, db, task_id)
     clips = await task_service.clip_repo.get_clips_by_task(db, task_id)
+    wanted = {item.strip() for item in ids.split(",") if item.strip()}
+    if wanted:
+        # A selection: only those clips, in their usual order.
+        clips = [clip for clip in clips if clip.get("id") in wanted]
     # Release the DB connection before storage lookups and the long stream;
     # see get_clip_file.
     await db.close()
@@ -1196,10 +1209,11 @@ async def _prepare_clip_archive(request: Request, db: AsyncSession, task_id: str
 async def preflight_clip_archive(
     task_id: str,
     request: Request,
+    ids: str = "",
     db: AsyncSession = Depends(get_db, scope="function"),
 ):
     """Check a ZIP download would start, so a browser can surface errors first."""
-    user_id, task, entries = await _prepare_clip_archive(request, db, task_id)
+    user_id, task, entries = await _prepare_clip_archive(request, db, task_id, ids)
     if await clip_archive.archive_in_progress(user_id):
         raise HTTPException(
             status_code=429,
@@ -1216,10 +1230,11 @@ async def preflight_clip_archive(
 async def download_clip_archive(
     task_id: str,
     request: Request,
+    ids: str = "",
     db: AsyncSession = Depends(get_db, scope="function"),
 ):
     """Stream every existing clip of the task as one ZIP, built on the fly."""
-    user_id, task, entries = await _prepare_clip_archive(request, db, task_id)
+    user_id, task, entries = await _prepare_clip_archive(request, db, task_id, ids)
     try:
         slot = await clip_archive.ArchiveSlot(user_id).acquire()
     except clip_archive.ClipArchiveBusy as exc:
@@ -1289,6 +1304,29 @@ async def split_clip(
     except Exception as e:
         logger.error(f"Error splitting clip: {e}")
         raise HTTPException(status_code=500, detail=f"Error splitting clip: {str(e)}")
+
+
+@router.post("/{task_id}/clips/{clip_id}/shorten")
+async def shorten_clip(
+    task_id: str, clip_id: str, request: Request, db: AsyncSession = Depends(get_db)
+):
+    """Make a shorter copy of a subject clip (15, 30, 60 or 120 seconds at most)."""
+    try:
+        payload = await _read_json_object(request)
+        max_seconds = payload.get("max_seconds")
+        if isinstance(max_seconds, bool) or not isinstance(max_seconds, int):
+            raise HTTPException(status_code=400, detail="max_seconds must be 15, 30, 60 or 120")
+
+        task_service = TaskService(db)
+        await _require_task_owner(request, task_service, db, task_id)
+        return await task_service.shorten_clip(task_id, clip_id, max_seconds)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error shortening clip: {e}")
+        raise HTTPException(status_code=500, detail=f"Error shortening clip: {str(e)}")
 
 
 @router.post("/{task_id}/clips/merge")
@@ -1528,7 +1566,7 @@ async def export_clip(
             preset_name,
         )
 
-        download_name = f"{Path(clip['filename']).stem}_{preset_name}.mp4"
+        download_name = export_download_filename(clip["filename"], preset_name, clip_download_stem(clip))
         return FileResponse(
             path=str(output_path), media_type="video/mp4", filename=download_name,
             background=BackgroundTask(output_path.unlink, missing_ok=True),
@@ -1779,4 +1817,10 @@ async def clip_post_copy(
     except Exception as exc:
         logger.warning("Post copy failed: %s", exc)
         raise HTTPException(status_code=502, detail="Could not write the description right now") from None
-    return {"description": copy.description, "hashtags": copy.hashtags}
+    return {
+        "description": copy.description,
+        "hashtags": copy.hashtags,
+        "char_count": copy.char_count,
+        "hooks": copy.hooks,
+        "trending": copy.trending,
+    }

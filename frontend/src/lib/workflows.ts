@@ -4,7 +4,7 @@
  * `generated_clips.workflow_meta` and `GET /tasks/workflows`).
  */
 
-export const WORKFLOWS = ["highlights", "series", "topic", "recap", "trailer"] as const;
+export const WORKFLOWS = ["highlights", "series", "topic", "subjects", "recap", "trailer"] as const;
 export type Workflow = (typeof WORKFLOWS)[number];
 
 export function isWorkflow(value: unknown): value is Workflow {
@@ -64,6 +64,7 @@ export const MIN_SOURCE_SECONDS: Record<Workflow, number> = {
   topic: 60,
   recap: 180,
   trailer: 180,
+  subjects: 300,
 };
 
 /** localStorage key for the last workflow picked on the create screen. */
@@ -121,6 +122,7 @@ export type WorkflowErrorCode =
   | "source_too_short"
   | "no_story"
   | "topic_not_found"
+  | "subjects_not_found"
   | "recap_unsupported"
   | "trailer_unbuildable"
   | "analysis_incomplete"
@@ -142,7 +144,8 @@ export type WorkflowRequestErrorCode =
   | "TOO_MANY_PARTS"
   | "SOURCE_TOO_SHORT_FOR_RECAP"
   | "SOURCE_TOO_SHORT_FOR_TRAILER"
-  | "SOURCE_TOO_SHORT_FOR_TOPIC";
+  | "SOURCE_TOO_SHORT_FOR_TOPIC"
+  | "SOURCE_TOO_SHORT_FOR_SUBJECTS";
 
 /** `detail` of a rejected create. TOO_MANY_PARTS adds `max_parts`; the source minimums add `min_source_seconds`. */
 export type WorkflowRequestError = {
@@ -195,6 +198,15 @@ export type WorkflowPlanTopic = {
   suggested_topics?: string[];
 };
 
+/** One subject of a subjects run: a compilation of every beat about it. */
+export type WorkflowPlanSubject = {
+  label: string;
+  description?: string;
+  moments: number;
+  /** Seconds of speech the compilation plays. */
+  seconds: number;
+};
+
 export type WorkflowPlanError = {
   code: WorkflowErrorCode;
   details: {
@@ -225,6 +237,9 @@ export type WorkflowPlan = {
   points?: WorkflowPlanPoint[];
   beats?: WorkflowPlanBeat[];
   topic?: WorkflowPlanTopic;
+  subjects?: WorkflowPlanSubject[];
+  /** Subjects: the lengths, in seconds, a compilation can be shortened to. */
+  shorten_choices?: number[];
   notes?: WorkflowNote[];
   /** Recap and trailer: planned length in seconds of speech. */
   seconds?: number;
@@ -244,7 +259,17 @@ export type WorkflowPlan = {
   };
 };
 
-export type WorkflowRole = "part" | "topic" | "recap" | "trailer";
+export type WorkflowRole = "part" | "topic" | "recap" | "trailer" | "subject";
+
+/** One beat of a subject compilation, in source seconds. */
+export type WorkflowMetaMoment = {
+  range: SourceRange;
+  first_unit?: number;
+  last_unit?: number;
+  strength: number;
+  seconds: number;
+  title: string;
+};
 
 export type WorkflowMetaPoint = {
   label: string;
@@ -288,6 +313,15 @@ export type WorkflowMeta = {
   why?: string;
   /** A spare moment that replaced a selected one the visual check dropped. */
   reserve?: boolean;
+  // subject
+  subject?: string;
+  moments?: WorkflowMetaMoment[];
+  moment_count?: number;
+  /** The length the AI suggests for a shorter copy, for this subject and style. */
+  recommended_shorten?: number;
+  /** Set on a shortened copy: the length it was cut to, and the clip it came from. */
+  shortened_to?: number;
+  parent_clip_id?: string;
   // recap / trailer
   points?: WorkflowMetaPoint[];
   beats?: WorkflowMetaBeat[];
@@ -326,6 +360,8 @@ export type WorkflowInfo = {
   part_count?: { min: number; max: number };
   /** series: part [min, max] seconds; recap: target seconds (auto scales: null); trailer: target seconds. */
   lengths?: Record<"auto" | "short" | "medium" | "long", [number, number] | number | null>;
+  /** subjects: the lengths a compilation can be shortened to. */
+  shorten_choices?: number[];
 };
 
 /** `GET /tasks/workflows`. `enabled` false: highlights without instructions only. */
@@ -359,5 +395,6 @@ export function expectedOutputs(
     return Math.min(6, Math.max(SERIES_MIN_PARTS, Math.round(sourceSeconds / 90)));
   }
   if (workflow === "topic") return 5;
+  if (workflow === "subjects") return 4;
   return expectedHighlightCount(sourceSeconds);
 }

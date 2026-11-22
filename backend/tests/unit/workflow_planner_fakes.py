@@ -13,6 +13,7 @@ from typing import Any, Callable, Optional
 from src.workflows import outline as outline_module
 from src.workflows import recap as recap_module
 from src.workflows import series as series_module
+from src.workflows import subjects as subjects_module
 from src.workflows import topic as topic_module
 from src.workflows import trailer as trailer_module
 from src.workflows.contracts import PlanContext, WorkflowOptions, WorkflowSpec
@@ -217,7 +218,7 @@ class ScriptedModel:
         return [call.schema for call in self.calls]
 
     def install(self, monkeypatch) -> "ScriptedModel":
-        for module in (outline_module, series_module, topic_module, recap_module, trailer_module):
+        for module in (outline_module, series_module, topic_module, recap_module, trailer_module, subjects_module):
             monkeypatch.setattr(module, "build_agent", self.agent)
         monkeypatch.setattr("src.ai._run_transcript_analysis", self.run)
         return self
